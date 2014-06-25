@@ -104,7 +104,7 @@ sub download {
         $self->_download_from_genbank($filename, FASTA, $id);
         push @downloaded, $filename;
     }
-    return @downloaded;
+    return \@downloaded;
 }
 
 
