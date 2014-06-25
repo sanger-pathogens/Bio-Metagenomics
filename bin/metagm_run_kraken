@@ -1,6 +1,6 @@
 #!/usr/bin/env perl
 
-package Bio::Metagenomics::Bin::MetagmBuildKrakenDb;
+package Bio::Metagenomics::Bin::MetagmRunKraken;
 
 # ABSTRACT: Runs kraken, makes kraken report file. Does not keep intermediate files
 
