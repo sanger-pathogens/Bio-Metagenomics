@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+
+package Bio::Metagenomics::Bin::MetagmBuildKrakenDb;
+
+# ABSTRACT: Runs kraken, makes kraken report file. Does not keep intermediate files
+
+# PODNAME: metagm_build_kraken_db
+
+=head1 synopsis
+
+Runs kraken, makes kraken report file. Does not keep intermediate files
+
+=cut
+
+BEGIN { unshift( @INC, '../lib' ) }
+BEGIN { unshift( @INC, './lib' ) }
+BEGIN { unshift( @INC, '/software/pathogen/internal/prod/lib/' ) }
+
+use Bio::Metagenomics::CommandLine::RunKraken;
+
+Bio::Metagenomics::CommandLine::RunKraken->new(args => \@ARGV, script_name => $0)->run;
+

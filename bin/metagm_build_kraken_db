@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+
+package Bio::Metagenomics::Bin::MetagmBuildKrakenDb;
+
+# ABSTRACT: Builds a kraken database
+
+# PODNAME: metagm_build_kraken_db
+
+=head1 synopsis
+
+Builds a Kraken database
+
+=cut
+
+BEGIN { unshift( @INC, '../lib' ) }
+BEGIN { unshift( @INC, './lib' ) }
+BEGIN { unshift( @INC, '/software/pathogen/internal/prod/lib/' ) }
+
+use Bio::Metagenomics::CommandLine::BuildKrakenDb;
+
+Bio::Metagenomics::CommandLine::BuildKrakenDb->new(args => \@ARGV, script_name => $0)->run;
