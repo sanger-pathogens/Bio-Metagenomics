@@ -23,7 +23,7 @@ has 'ids_list'           => ( is => 'rw', isa => 'ArrayRef[Str]');
 has 'kraken_build_exec'  => ( is => 'rw', isa => 'Str', default => 'kraken-build' );
 has 'max_db_size'        => ( is => 'rw', isa => 'Int', default => 4);
 has 'minimizer_len'      => ( is => 'rw', isa => 'Int', default => 13);
-has 'noclean'            => ( is => 'rw', isa => 'Bool', default => 1 );
+has 'noclean'            => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'threads'            => ( is => 'rw', isa => 'Int', default => 1);
 
 
