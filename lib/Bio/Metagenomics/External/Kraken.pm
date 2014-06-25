@@ -10,9 +10,12 @@ Wrapper for Kraken https://ccb.jhu.edu/software/kraken/
 
 use Moose;
 use Bio::Metagenomics::Exceptions;
+use Bio::Metagenomics::Genbank;
 
 has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
+has 'ids_file'           => ( is => 'ro', isa => 'Maybe[Str]' );
+has 'ids_list'           => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
 has 'kraken_exec'        => ( is => 'ro', isa => 'Str', default => 'kraken' );
 has 'kraken_build_exec'  => ( is => 'ro', isa => 'Str', default => 'kraken-build' );
 has 'kraken_report_exec' => ( is => 'ro', isa => 'Str', default => 'kraken-report' );
@@ -66,6 +69,22 @@ sub _add_to_library_command {
 }
 
 
+sub _add_to_library {
+    my ($self) = @_;
+    return unless (defined($self->ids_file) or defined($self->ids_list));
+
+    my $gb = Bio::Metagenomics::Genbank->new(
+        ids_file => $self->ids_file,
+        ids_list => $self->ids_list,
+        output_dir => File::Spec->catfile($self->database, 'downloads'),
+    );
+    my $downloaded = $gb->download();
+    my @commands = map {$self->_add_to_library_command($_)} @{$downloaded};
+    $self->_run_commands(\@commands);
+    $gb->clean();
+}
+
+
 sub _build_command {
     my ($self) = @_;
     return join(
@@ -95,6 +114,15 @@ sub _clean_command {
 }
 
 
+
+sub _run_commands {
+    my ($self, $commands) = @_;
+    foreach my $command (@{$commands}) {
+        system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
+    }
+}
+
+
 sub build {
     my ($self) = @_;
     my @commands = (
@@ -102,16 +130,16 @@ sub build {
         $self->_download_domain_command('viruses'),
         $self->_download_domain_command('bacteria'),
         $self->_download_domain_command('human'),
-        $self->_build_command(),
     );
+    $self->_run_commands(\@commands);
 
+    $self->_add_to_library();
+
+    @commands = ($self->_build_command());
     if ($self->clean) {
         push @commands, $self->_clean_command();
     }
-
-    foreach my $command (@commands) {
-        system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
-    }
+    $self->_run_commands(\@commands);
 }
 
 
@@ -163,14 +191,13 @@ sub run_kraken {
         $self->_run_kraken_command($tmp_out),
         $self->_kraken_report_command($tmp_out, $outfile)
     );
-    foreach my $command (@commands) {
-        system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
-    }
+    $self->_run_commands(\@commands);
     if ($self->clean) {
         unlink $tmp_out;
     }
 }
 
 
+__PACKAGE__->meta->make_immutable;
 no Moose;
 1;
