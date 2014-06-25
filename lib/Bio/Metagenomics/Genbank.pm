@@ -12,6 +12,8 @@ Download genbank records using GI or Genbank IDs
 use Moose;
 use LWP::Simple;
 use Bio::Metagenomics::Exceptions;
+use File::Spec;
+use File::Path;
 
 use constant {
     FASTA => 0,
@@ -21,9 +23,10 @@ use constant {
 
 
 has 'delay'      => ( is => 'ro', isa => 'Int', default => 3 );
-has 'ids_list'   => ( is => 'ro', isa => 'ArrayRef[Str]');
-has 'ids_file'   => ( is => 'ro', isa => 'Str' );
+has 'ids_file'   => ( is => 'ro', isa => 'Maybe[Str]' );
+has 'ids_list'   => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
 has 'max_tries'  => ( is => 'ro', isa => 'Int', default => 5 );
+has 'output_dir' => ( is => 'rw', isa => 'Str', required => 1 );
 
 
 sub BUILD {
@@ -33,6 +36,7 @@ sub BUILD {
         Bio::Metagenomics::Exceptions::GenbankBuild->throw(error => 'Must provide ids_file and/or ids_list');
     }
     $self->_load_ids_from_file();
+    $self->output_dir(File::Spec->rel2abs($self->output_dir));
 }
 
 
@@ -91,6 +95,28 @@ sub _download_from_genbank {
 }
 
 
+sub download {
+    my ($self) = @_;
+    my @downloaded;
+    mkdir($self->output_dir) or die $!;
+    for my $id (@{$self->ids_list}) {
+        my $filename = File::Spec->catfile($self->output_dir, "$id.fasta");
+        $self->_download_from_genbank($filename, FASTA, $id);
+        push @downloaded, $filename;
+    }
+    return @downloaded;
+}
+
+
+sub clean {
+    my ($self) = @_;
+    if (-e $self->output_dir and -d $self->output_dir) {
+        File::Path->remove_tree($self->output_dir);
+    }
+}
+
+
+__PACKAGE__->meta->make_immutable;
 no Moose;
 1;
 
