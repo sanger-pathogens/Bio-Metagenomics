@@ -12,8 +12,8 @@ BEGIN {
 }
 
 
-throws_ok{Bio::Metagenomics::Genbank->new()} 'Bio::Metagenomics::Exceptions::GenbankBuild' , 'Genkbank BUILD throws exception if no ids given';
-throws_ok{Bio::Metagenomics::Genbank->new('ids_list'=>[])} 'Bio::Metagenomics::Exceptions::GenbankBuild' , 'Genkbank BUILD throws exception if no ids given';
+throws_ok{Bio::Metagenomics::Genbank->new(output_dir => 'x')} 'Bio::Metagenomics::Exceptions::GenbankBuild' , 'Genkbank BUILD throws exception if no ids given';
+throws_ok{Bio::Metagenomics::Genbank->new(output_dir => 'x', 'ids_list'=>[])} 'Bio::Metagenomics::Exceptions::GenbankBuild' , 'Genkbank BUILD throws exception if no ids given';
 
 my $obj;
 my @ids = ('1','2','3');
@@ -21,6 +21,7 @@ my @ids = ('1','2','3');
 ok($obj = Bio::Metagenomics::Genbank->new(
     'ids_list' => \@ids,
     'ids_file' => 't/data/genbank_load_ids_from_file.txt',
+    'output_dir' => 'genbank_test',
 ), 'initialize object');
 
 my @expected_ids = ('1', '2', '3', 'file_id1', 'file_id2');
