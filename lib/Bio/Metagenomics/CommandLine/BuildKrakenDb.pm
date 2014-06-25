@@ -18,8 +18,8 @@ use Bio::Metagenomics::External::Kraken;
 has 'args'               => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name'        => ( is => 'ro', isa => 'Str', required => 1 );
 has 'database'           => ( is => 'rw', isa => 'Str' );
-has 'ids_file'           => ( is => 'ro', isa => 'Str' );
-has 'ids_list'           => ( is => 'ro', isa => 'ArrayRef[Str]');
+has 'ids_file'           => ( is => 'rw', isa => 'Str' );
+has 'ids_list'           => ( is => 'rw', isa => 'ArrayRef[Str]');
 has 'kraken_build_exec'  => ( is => 'rw', isa => 'Str', default => 'kraken-build' );
 has 'max_db_size'        => ( is => 'rw', isa => 'Int', default => 4);
 has 'minimizer_len'      => ( is => 'rw', isa => 'Int', default => 13);
@@ -58,7 +58,7 @@ sub BUILD {
 
     $self->database($self->args->[0]);
     $self->ids_file($ids_file) if defined($ids_file);
-    $eelf->ids_list(\@ids_list) if scalar(@ids_list);
+    $self->ids_list(\@ids_list) if scalar(@ids_list);
     $self->threads($threads) if defined($threads);
     $self->kraken_build_exec($kraken_build_exec) if defined($kraken_build_exec);
     $self->max_db_size($max_db_size) if defined($max_db_size);
