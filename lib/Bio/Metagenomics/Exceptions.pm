@@ -15,6 +15,8 @@ use Exception::Class (
     Bio::Metagenomics::Exceptions::GenbankBuild => { description => 'Invalid attributes when building Genbank object' },
     Bio::Metagenomics::Exceptions::GenbankUnknownFiletype => { description => 'Unknown type of file. Must be FASTA or GENBANK' },
     Bio::Metagenomics::Exceptions::GenbankDownload => { description => 'Unable to download file from Genbank' },
+    Bio::Metagenomics::Exceptions::TaxonRank => { description => 'Taxon rank not allowed' },
+    Bio::Metagenomics::Exceptions::TaxonRankTooHigh => { description => 'Taxon rank too high to be assigned' },
 );
 
 
