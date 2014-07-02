@@ -10,6 +10,8 @@ Exceptions for input data
 
 
 use Exception::Class (
+    Bio::Metagenomics::Exceptions::FileConvertTypes => { description => 'Cannot convert between given filetypes' },
+    Bio::Metagenomics::Exceptions::FileConvertReadKraken => { description => 'Error reading Kraken report file' },
     Bio::Metagenomics::Exceptions::KrakenDomainNotFound => { description => 'Domain not found. Must be one of bacteria, viruses, human' },
     Bio::Metagenomics::Exceptions::SystemCallError => { description => 'Error running system call.' },
     Bio::Metagenomics::Exceptions::GenbankBuild => { description => 'Invalid attributes when building Genbank object' },
