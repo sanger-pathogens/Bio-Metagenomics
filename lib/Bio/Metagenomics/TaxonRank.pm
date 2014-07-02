@@ -50,10 +50,14 @@ sub set_rank {
     my ($self, $rank, $value) = @_;
     defined ($self->_ranks->{$rank}) or  Bio::Metagenomics::Exceptions::TaxonRank->throw(error => "rank:$rank");
     my $index = $self->_ranks->{$rank};
-    $index <= scalar(@{$self->_values}) or Bio::Metagenomics::Exceptions::TaxonRankTooHigh->throw();
     while (scalar(@{$self->_values}) > $index) {
         pop @{$self->_values};
     }
+
+    foreach my $i (scalar(@{$self->_values}) - 1 .. $index - 2) {
+        push @{$self->_values}, 'unknown';
+    }
+
     push @{$self->_values}, $value;
 }
 

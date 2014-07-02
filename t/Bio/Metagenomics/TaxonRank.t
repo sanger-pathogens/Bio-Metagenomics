@@ -18,8 +18,10 @@ my @ids = ('1','2','3');
 ok($obj = Bio::Metagenomics::TaxonRank->new(), 'initialize object');
 
 is($obj->to_metaphlan_string(), '', 'Test to_string, no values');
-throws_ok{$obj->set_rank('phylum', 'p')} 'Bio::Metagenomics::Exceptions::TaxonRankTooHigh', 'Throws error if add too high rank';
 throws_ok{$obj->set_rank('notarank', 'p')} 'Bio::Metagenomics::Exceptions::TaxonRank', 'Throws error unknown rank';
+
+$obj->set_rank('class', 'cl');
+is($obj->to_metaphlan_string(), 'k__unknown|p__unknown|c__cl', 'Test to_string, auto add unknown names');
 
 $obj->set_rank('domain', 'do');
 is($obj->to_metaphlan_string(), 'k__do', 'Test to_string, domain only');
