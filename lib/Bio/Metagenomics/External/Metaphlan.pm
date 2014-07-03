@@ -10,6 +10,7 @@ Wrapper for Metaphlan http://huttenhower.sph.harvard.edu/metaphlan
 
 use Moose;
 use Bio::Metagenomics::Exceptions;
+use Bio::Metagenomics::FileConvert;
 use File::Temp qw/ tempdir /;
 use Cwd;
 
@@ -17,7 +18,7 @@ has 'hclust_heatmap_options'      => ( is => 'ro', isa => 'Str', default => '-c 
 has 'hclust_heatmap_exec'         => ( is => 'ro', isa => 'Str', default => 'metaphlan_hclust_heatmap.py' );
 has 'merge_metaphlan_tables_exec' => ( is => 'ro', isa => 'Str', default => 'merge_metaphlan_tables.py' );
 has 'names_file'                  => ( is => 'ro', isa => 'Maybe[Str]' );
-has 'names_list'                  => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
+has 'names_list'                  => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]');
 has 'outfile'                     => ( is => 'ro', isa => 'Str', required => 1);
 
 
@@ -34,7 +35,7 @@ sub BUILD {
 sub _load_names_from_file {
     my ($self) = @_;
     defined($self->names_file) or return;
-    defined($self->names_list) or $self->names_list = [];
+    defined($self->names_list) or $self->names_list([]);
     open F, $self->names_file or die $!;
     while (<F>) {
         chomp;
