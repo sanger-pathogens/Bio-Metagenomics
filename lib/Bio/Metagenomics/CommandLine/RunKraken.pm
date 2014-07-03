@@ -50,7 +50,6 @@ sub BUILD {
     );
 
     if (!($options_ok) or !(scalar(@{$self->args}) == 3 or scalar(@{$self->args}) == 4) or $help){
-        print "ok: $options_ok\n" . scalar(@{$self->args}) . "\n";
         $self->usage_text;
     }
 
@@ -79,7 +78,7 @@ sub run {
         preload => $self->preload,
         reads_1 => $self->reads_1,
         reads_2 => $self->reads_2,
-        threads => $self->threads,        
+        threads => $self->threads,
     );
     $kraken->run_kraken($self->outfile);
 }
