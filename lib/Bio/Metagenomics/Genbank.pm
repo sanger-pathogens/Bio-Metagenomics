@@ -24,7 +24,7 @@ use constant {
 
 has 'delay'      => ( is => 'ro', isa => 'Int', default => 3 );
 has 'ids_file'   => ( is => 'ro', isa => 'Maybe[Str]' );
-has 'ids_list'   => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
+has 'ids_list'   => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]');
 has 'max_tries'  => ( is => 'ro', isa => 'Int', default => 5 );
 has 'output_dir' => ( is => 'rw', isa => 'Str', required => 1 );
 
@@ -43,7 +43,7 @@ sub BUILD {
 sub _load_ids_from_file {
     my ($self) = @_;
     defined($self->ids_file) or return;
-    defined($self->ids_list) or $self->ids_list = [];
+    defined($self->ids_list) or $self->ids_list([]);
     open F, $self->ids_file or die $!;
     while (<F>) {
         chomp;
