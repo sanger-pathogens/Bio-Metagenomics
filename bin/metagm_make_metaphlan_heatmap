@@ -1,0 +1,22 @@
+#!/usr/bin/env perl
+
+package Bio::Metagenomics::Bin::MetagmMakeMetaphlanHeatmap;
+
+# ABSTRACT: Runs Metaphlan scripts to make heatmap
+
+# PODNAME: metagm_make_metaphlan_heatmap
+
+=head1 synopsis
+
+Runs Metaphlan scripts to make heatmap
+
+=cut
+
+BEGIN { unshift( @INC, '../lib' ) }
+BEGIN { unshift( @INC, './lib' ) }
+BEGIN { unshift( @INC, '/software/pathogen/internal/prod/lib/' ) }
+
+use Bio::Metagenomics::CommandLine::MakeMetaphlanHeatmap;
+
+Bio::Metagenomics::CommandLine::MakeMetaphlanHeatmap->new(args => \@ARGV, script_name => $0)->run;
+
