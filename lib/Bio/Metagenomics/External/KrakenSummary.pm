@@ -12,7 +12,6 @@ use Moose;
 use List::Util qw(max);
 use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::External::KrakenReport;
-use Data::Dumper;
 
 has 'reports_fofn'      => ( is => 'ro', isa => 'Maybe[Str]');
 has 'report_files'      => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]');

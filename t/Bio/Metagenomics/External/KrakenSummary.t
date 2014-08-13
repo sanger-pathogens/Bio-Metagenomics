@@ -2,7 +2,6 @@
 use strict;
 use warnings;
 use File::Compare;
-use Data::Dumper;
 
 BEGIN { unshift( @INC, './lib' ) }
 

@@ -14,7 +14,6 @@ use Moose;
 use Getopt::Long qw(GetOptionsFromArray);
 use Cwd 'abs_path';
 use Bio::Metagenomics::External::KrakenSummary;
-use Data::Dumper;
 
 has 'args'               => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name'        => ( is => 'ro', isa => 'Str', required => 1 );
