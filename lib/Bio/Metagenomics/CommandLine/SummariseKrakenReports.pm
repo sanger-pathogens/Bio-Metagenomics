@@ -43,7 +43,7 @@ sub BUILD {
     my $options_ok = GetOptionsFromArray(
         $self->args,
         'h|help' => \$help,
-        'a|assigned_drectly' => \$assigned_directly,
+        'a|assigned_directly' => \$assigned_directly,
         'c|counts' => \$counts,
         'm|min_cutoff=f' => \$min_cutoff,
         'f|reports_fofn=s' => \$reports_fofn,
@@ -119,7 +119,7 @@ Options:
     Report counts of reads instead of percentages of the total reads in each
     file.
 
--a,assigned_drectly
+-a,assigned_directly
     Report reads assigned directly to this taxon, instead of the
     default of reporting reads covered by the clade rooted at this taxon.
 
