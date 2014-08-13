@@ -26,6 +26,7 @@ has 'preload'            => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'reads_1'            => ( is => 'rw', isa => 'Str');
 has 'reads_2'            => ( is => 'rw', isa => 'Str');
 has 'threads'            => ( is => 'rw', isa => 'Int', default => 1 );
+has 'tmp_file'           => ( is => 'rw', isa => 'Str');
 
 
 sub BUILD {
@@ -37,6 +38,7 @@ sub BUILD {
         $noclean,
         $preload,
         $threads,
+        $tmp_file,
     );
 
     my $options_ok = GetOptionsFromArray(
@@ -47,6 +49,7 @@ sub BUILD {
         'kraken_report' => \$kraken_report_exec,
         'preload' => \$preload,
         't|threads=i' => \$threads,
+        'u|tmp_file=s' => \$tmp_file,
     );
 
     if (!($options_ok) or !(scalar(@{$self->args}) == 3 or scalar(@{$self->args}) == 4) or $help){
@@ -65,6 +68,7 @@ sub BUILD {
     $self->noclean($noclean) if defined($noclean);
     $self->preload($preload) if defined($preload);
     $self->threads($threads) if defined($threads);
+    $self->tmp_file($tmp_file) if defined($tmp_file);
 }
 
 
@@ -79,6 +83,7 @@ sub run {
         reads_1 => $self->reads_1,
         reads_2 => $self->reads_2,
         threads => $self->threads,
+        tmp_file => $self->tmp_file,
     );
     $kraken->run_kraken($self->outfile);
 }
@@ -111,6 +116,12 @@ Options:
 
 -t,-threads INT
     Number of threads [" . $self->threads . "]
+
+-u,-tmp_file FILENAME
+    Name of temporary file made when running kraken.
+    (It's the output of kraken/input of kraken-report).
+    This file is 1 line per read, so can be quite large.
+    Default: <name_of_ouptput_report>.kraken_out
 ";
 
     exit(1);

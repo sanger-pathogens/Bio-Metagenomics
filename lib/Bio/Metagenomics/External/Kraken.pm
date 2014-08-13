@@ -25,6 +25,7 @@ has 'preload'            => ( is => 'ro', isa => 'Bool', default => 0 );
 has 'reads_1'            => ( is => 'ro', isa => 'Str');
 has 'reads_2'            => ( is => 'ro', isa => 'Maybe[Str]');
 has 'threads'            => ( is => 'ro', isa => 'Int', default => 1 );
+has 'tmp_file'           => ( is => 'ro', isa => 'Str');
 
 
 sub _download_taxonomy_command {
@@ -186,7 +187,7 @@ sub _kraken_report_command {
 
 sub run_kraken {
     my ($self, $outfile) = @_;
-    my $tmp_out = "$outfile.kraken_out";
+    my $tmp_out = defined $self->tmp_file ? $self->tmp_file : "$outfile.kraken_out";
     my @commands = (
         $self->_run_kraken_command($tmp_out),
         $self->_kraken_report_command($tmp_out, $outfile)
