@@ -1,0 +1,17 @@
+ 42.00	210	210	U	0	unclassified
+ 43.00	290	290	-	1	root
+ 44.00	240	210	D	2	  Domain1
+ 45.00	239	210	P	4	    Phylum1
+ 46.00	238	210	C	5	      Class1
+ 47.00	237	22	O	6	        Order1
+ 48.00	236	22	F	7	          Family1
+ 49.00	235	22	G	8	            Genus1
+ 53.00	150	110	D	11	  Domain2
+ 54.00	149	110	P	13	    Phylum2
+ 55.00	148	110	C	14	      Class2
+ 56.00	147	119	-	15	        Order2
+ 57.00	146	12	F	16	          Family2
+ 58.00	145	12	G	17	            Genus2
+ 59.00	144	12	S	19	              Species2
+ 60.00	122	12	-	20	                Strain3
+ 61.00	122	12	-	21	                Strain4
