@@ -97,7 +97,7 @@ Produces a sumary from many kraken report files.
 
 Report filenames must be given to this script, which can be done using
 one or both of:
-    1. list them after the options
+    1. list them after the name of the output file
     2. use the option -f to give a file of filenames.
 
 
@@ -107,7 +107,7 @@ Options:
     Show this help and exit
 
 -f,reports_fofn
-    Files of kraken report filenames
+    File of kraken report filenames
 
 -l,level D|P|C|O|F|G|S|T
     Taxonomic level to output. Choose from:
