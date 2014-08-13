@@ -30,16 +30,16 @@ sub BUILD {
     my ($self) = @_;
     defined($self->report_files) or $self->report_files([]);
     $self->_load_reports_fofn();
-    scalar @{$self->report_files} > 0 or Bio::Metagenomics::Exceptions::KrakenSummaryBuild->throw(error => "No report files given");
+    scalar @{$self->report_files} > 0 or Bio::Metagenomics::Exceptions::KrakenSummaryBuild->throw(error => "No report files given. Cannot continue\n");
     my %allowed_levels = map {$_ => 1} qw/ D P C O F G S T/;
-    defined $allowed_levels{$self->taxon_level} or Bio::Metagenomics::Exceptions::KrakenSummaryBuild->throw(error => "Bad taxon level:" . $self->taxon_level);
+    defined $allowed_levels{$self->taxon_level} or Bio::Metagenomics::Exceptions::KrakenSummaryBuild->throw(error => "Bad taxon level:" . $self->taxon_level . ". Cannot continue\n");
 }
 
 
 sub _load_reports_fofn {
     my ($self) = @_;
     defined($self->reports_fofn) or return;
-    open F, $self->reports_fofn or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "filename: '" . $self->reports_fofn . "'");
+    open F, $self->reports_fofn or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file '" . $self->reports_fofn . "'\n");
     while (<F>) {
         chomp;
         push @{$self->report_files}, $_;
@@ -132,7 +132,7 @@ sub run {
     $self->_combine_files_data();
     my $rows = $self->_gather_output_data();
     $rows = _transpose($rows) if $self->transpose;
-    open F, ">" . $self->outfile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "filename: '" . $self->outfile . "'");
+    open F, ">" . $self->outfile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file '" . $self->outfile . "'\n");
     foreach my $row (@{$rows}) {
         print F join("\t", @{$row}), "\n";
     }
