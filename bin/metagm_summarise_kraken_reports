@@ -1,0 +1,21 @@
+#!/usr/bin/env perl
+
+package Bio::Metagenomics::Bin::MetagmSummariseKrakenReports;
+
+# ABSTRACT: Makes summary of a set of kraken reports
+
+# PODNAME: metagm_summarise_kraken_reports
+
+=head1 synopsis
+
+Makes summary of a set of kraken reports
+
+=cut
+
+BEGIN { unshift( @INC, '../lib' ) }
+BEGIN { unshift( @INC, './lib' ) }
+BEGIN { unshift( @INC, '/software/pathogen/internal/prod/lib/' ) }
+
+use Bio::Metagenomics::CommandLine::SummariseKrakenReports;
+
+Bio::Metagenomics::CommandLine::SummariseKrakenReports->new(args => \@ARGV, script_name => $0)->run;
