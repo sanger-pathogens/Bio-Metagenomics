@@ -1,7 +1,6 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
-use Data::Dumper;
 
 BEGIN { unshift( @INC, './lib' ) }
 
