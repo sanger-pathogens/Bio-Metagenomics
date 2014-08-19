@@ -14,7 +14,7 @@ use Exception::Class (
     Bio::Metagenomics::Exceptions::FileConvertTypes => { description => 'Cannot convert between given filetypes' },
     Bio::Metagenomics::Exceptions::FileConvertReadKraken => { description => 'Error reading Kraken report file' },
     Bio::Metagenomics::Exceptions::KrakenDomainNotFound => { description => 'Domain not found. Must be one of bacteria, viruses, human' },
-    Bio::Metagenomics::Exceptions::KrakenReportIndentLevel => { description => 'Mismatch in taxon level code (column 4) and indentation level of final column' },
+    Bio::Metagenomics::Exceptions::KrakenReportTaxonUnknown => { description => 'Taxon letter code not recognised' },
     Bio::Metagenomics::Exceptions::KrakenReportBuild => { description => 'Invalid attributes when building KrakenReport object' },
     Bio::Metagenomics::Exceptions::KrakenSummaryBuild => { description => 'Invalid attributes when building KrakenSummary object' },
     Bio::Metagenomics::Exceptions::SystemCallError => { description => 'Error running system call.' },

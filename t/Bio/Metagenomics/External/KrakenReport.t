@@ -45,7 +45,7 @@ foreach my $i (0 .. $#test_lines) {
 my $obj;
 ok($obj = Bio::Metagenomics::External::KrakenReport->new(
     filename => 't/data/KrakenReport.report1'
-), 'initialize object');
+), 'initialize object from t/data/KrakenReport.report1');
 
 
 @expected = (
@@ -115,6 +115,35 @@ my @levels = qw/ D P C O F G S T/;
 for my $i (0..$#levels) {
     is_deeply($obj->hits_from_level($levels[$i]), $expected[$i]);
 }
+
+
+ok($obj = Bio::Metagenomics::External::KrakenReport->new(
+    filename => 't/data/KrakenReport.report3'
+), 'initialize object from t/data/KrakenReport.report3');
+
+@expected = (
+    {clade_reads => 40, node_reads => 10, taxon => 'D', name => 'Domain1'},
+    {clade_reads => 39, node_reads => 10, taxon => 'P', name => 'Phylum1'},
+    {clade_reads => 38, node_reads => 10, taxon => 'C', name => 'Class1'},
+    {clade_reads => 37, node_reads => 2, taxon => 'O', name => 'Order1'},
+    {clade_reads => 36, node_reads => 2, taxon => 'F', name => 'Family1'},
+    {clade_reads => 35, node_reads => 2, taxon => 'G', name => 'Genus1'},
+    {clade_reads => 34, node_reads => 2, taxon => 'S', name => 'Species1'},
+    {clade_reads => 17, node_reads => 1, taxon => 'T', name => 'Strain1'},
+    {clade_reads => 17, node_reads => 1, taxon => 'T', name => 'Strain2'},
+    {clade_reads => 17, node_reads => 1, taxon => 'T', name => 'StrainX'},
+    {clade_reads => 50, node_reads => 10, taxon => 'D', name => 'Domain2'},
+    {clade_reads => 49, node_reads => 10, taxon => 'P', name => 'Phylum2'},
+    {clade_reads => 48, node_reads => 10, taxon => 'C', name => 'Class2'},
+    {clade_reads => 46, node_reads => 2, taxon => 'F', name => 'Family2'},
+    {clade_reads => 45, node_reads => 2, taxon => 'G', name => 'Genus2'},
+    {clade_reads => 44, node_reads => 2, taxon => 'S', name => 'Species2'},
+    {clade_reads => 22, node_reads => 2, taxon => 'T', name => 'Strain3'},
+    {clade_reads => 22, node_reads => 2, taxon => 'T', name => 'Strain4'},
+);
+
+
+is_deeply($obj->hits, \@expected);
 
 done_testing();
 

@@ -38,32 +38,21 @@ sub _parse_report_line {
 sub _load_info_from_file {
     my ($self) = @_;
     $self->total_reads(0);
-
-    my %indent_to_taxon = (
-        0 => 'U',
-        2 => 'D',
-        4 => 'P',
-        6 => 'C',
-        8 => 'O',
-        10 => 'F',
-        12 => 'G',
-        14 => 'S',
-    );
-
-    my %taxon_to_indent = reverse %indent_to_taxon;
+    my $species_indent_level = -42;
+    my $under_species = 0;
+    my %taxons = map { $_ => 1 } qw/U D P C O F G S -/;
 
     open F, $self->filename or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "filename: '" . $self->filename . "'" );
     while (my $line = <F>) {
         my ($clade_reads, $node_reads, $taxon_letter, $name, $indent_level) = _parse_report_line($line);
         $self->total_reads($self->total_reads + $node_reads);
-        if ($taxon_letter ne '-' and $taxon_to_indent{$taxon_letter} != $indent_level) {
-            Bio::Metagenomics::Exceptions::KrakenReportIndentLevel->throw(error => "expected indent level:" . $taxon_to_indent{$taxon_letter} .". got:$indent_level. Line: $line");
+        if (!defined $taxons{$taxon_letter}) {
+            Bio::Metagenomics::Exceptions::TaxonUnknown->throw(error => "Unknown taxon from this line:$line\n");
         }
-
-        if ($taxon_letter eq 'U' and $name eq 'unclassified') {
+        elsif ($taxon_letter eq 'U' and $name eq 'unclassified') {
             $self->unclassified_reads($clade_reads);
         }
-        elsif (defined $taxon_to_indent{$taxon_letter} or  ($taxon_letter eq '-' and $taxon_to_indent{'S'} + 2 == $indent_level)) {
+        elsif ($taxon_letter ne '-' or ($under_species and $species_indent_level + 2 <= $indent_level)) {
             my %hit = (
                 clade_reads => $clade_reads,
                 node_reads => $node_reads,
@@ -71,6 +60,13 @@ sub _load_info_from_file {
                 name => $name
             );
             push (@{$self->hits}, \%hit);
+            if ($taxon_letter eq 'S') {
+                $under_species = 1;
+                $species_indent_level = $indent_level;
+            }
+            if ($indent_level < $species_indent_level) {
+                $under_species = 0;
+            }
         }
     }
     close F;
