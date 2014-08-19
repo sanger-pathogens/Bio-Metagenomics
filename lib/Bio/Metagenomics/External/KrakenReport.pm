@@ -57,7 +57,7 @@ sub _load_info_from_file {
         my ($clade_reads, $node_reads, $taxon_letter, $name, $indent_level) = _parse_report_line($line);
         $self->total_reads($self->total_reads + $node_reads);
         if ($taxon_letter ne '-' and $taxon_to_indent{$taxon_letter} != $indent_level) {
-            Bio::Metagenomics::Exceptions::KrakenReportIndentLevel(error => "expected indent level:" . $taxon_to_indent{$taxon_letter} .". got:$indent_level. Line: $line");
+            Bio::Metagenomics::Exceptions::KrakenReportIndentLevel->throw(error => "expected indent level:" . $taxon_to_indent{$taxon_letter} .". got:$indent_level. Line: $line");
         }
 
         if ($taxon_letter eq 'U' and $name eq 'unclassified') {
