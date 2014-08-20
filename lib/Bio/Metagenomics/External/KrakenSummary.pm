@@ -9,7 +9,7 @@ Package for summarising many kraken reports into one file
 =cut
 
 use Moose;
-use List::Util qw(max);
+use List::Util qw(max sum);
 use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::External::KrakenReport;
 
@@ -60,17 +60,16 @@ sub _combine_files_data {
 sub _gather_output_data {
     my ($self) = @_;
     my %hits;
-    my %name_counts;
+    my %names;
     foreach my $fname (keys %{$self->reports}) {
         my $level_hits = $self->reports->{$fname}->hits_from_level($self->taxon_level);
         $hits{$fname} = {};
         foreach (@{$level_hits}) {
-            $name_counts{$_->{name}} += $_->{node_reads};
+            $names{$_->{name}} = 1;
             $hits{$fname}{$_->{name}} = $_;
         }
     }
 
-    my @names = reverse sort { $name_counts{$a} <=> $name_counts{$b} } keys(%name_counts);
     my @files = sort @{$self->report_files};
     my %levels = (
         D => 'Domain',
@@ -82,9 +81,24 @@ sub _gather_output_data {
         S => 'Species',
         T => 'Strain',
     );
-    my @rows = [($levels{$self->taxon_level}, @files)];
-    my @totals = map {$self->reports->{$_}->total_reads} @files;
-    push (@rows, [('Total', @totals)]);
+
+    my @rows;
+
+    foreach my $name (keys %names) {
+        my @row;
+        foreach my $file (@files) {
+            my $key = $self->assigned_directly ? 'node_reads' : 'clade_reads';
+            my $stat = defined $hits{$file}{$name} ? $hits{$file}{$name}{$key} : 0;
+            $stat = int $stat;
+            $stat = sprintf("%.2f", 100 * $stat / $self->reports->{$file}->total_reads) unless $self->counts;
+            push(@row, $stat);
+        }
+        next if max(@row) < $self->min_cutoff or max(@row) == 0;
+        unshift(@row, $name);
+        push(@rows, \@row);
+    }
+
+    @rows = sort { sum(@$b[1..(scalar(@$b) - 1)]) <=> sum(@$a[1..(scalar(@$a) - 1)]) } @rows;
 
     my @unclassified;
     if ($self->counts) {
@@ -93,21 +107,10 @@ sub _gather_output_data {
     else {
         @unclassified = map {sprintf("%.2f", 100 * $self->reports->{$_}->unclassified_reads / $self->reports->{$_}->total_reads)} @files;
     }
-    push (@rows, [('Unclassified', @unclassified)]);
-
-    foreach my $name (@names) {
-        my @row;
-        foreach my $file (@files) {
-            my $key = $self->assigned_directly ? 'node_reads' : 'clade_reads';
-            my $stat = defined $hits{$file}{$name} ? $hits{$file}{$name}{$key} : 0;
-            $stat = sprintf("%.2f", 100 * $stat / $self->reports->{$file}->total_reads) unless $self->counts;
-            push(@row, $stat);
-        }
-        next if max(@row) < $self->min_cutoff;
-        unshift(@row, $name);
-        push(@rows, \@row);
-
-    }
+    unshift(@rows, [('Unclassified', @unclassified)]);
+    my @totals = map {$self->reports->{$_}->total_reads} @files;
+    unshift(@rows, [('Total', @totals)]);
+    unshift(@rows, [($levels{$self->taxon_level}, @files)]);
     return \@rows;
 }
 
