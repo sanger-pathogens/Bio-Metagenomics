@@ -47,7 +47,7 @@ sub _load_info_from_file {
         my ($clade_reads, $node_reads, $taxon_letter, $name, $indent_level) = _parse_report_line($line);
         $self->total_reads($self->total_reads + $node_reads);
         if (!defined $taxons{$taxon_letter}) {
-            Bio::Metagenomics::Exceptions::TaxonUnknown->throw(error => "Unknown taxon from this line:$line\n");
+            Bio::Metagenomics::Exceptions::KrakenReportTaxonUnknown->throw(error => "Unknown taxon from this line:$line\n");
         }
         elsif ($taxon_letter eq 'U' and $name eq 'unclassified') {
             $self->unclassified_reads($clade_reads);
