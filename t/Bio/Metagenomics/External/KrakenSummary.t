@@ -46,7 +46,7 @@ $obj->_combine_files_data();
 my $data = $obj->_gather_output_data();
 my @expected_data = (
     ['Domain', 't/data/KrakenReport.report1', 't/data/KrakenReport.report2'],
-    ['Total', 199, 1705],
+    ['Total', 209, 1705],
     ['Unclassified', '10', '210'],
     ['Domain1', '40', '240'],
     ['Domain2', '50', '150'],
@@ -66,7 +66,7 @@ $obj->_combine_files_data();
 $data = $obj->_gather_output_data();
 @expected_data = (
     ['Domain', 't/data/KrakenReport.report1', 't/data/KrakenReport.report2'],
-    ['Total', 199, 1705],
+    ['Total', 209, 1705],
     ['Unclassified', '10', '210'],
     ['Domain1', '40', '240'],
 );

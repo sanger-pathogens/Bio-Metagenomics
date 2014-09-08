@@ -40,7 +40,7 @@ sub _load_info_from_file {
     $self->total_reads(0);
     my $species_indent_level = -42;
     my $under_species = 0;
-    my %taxons = map { $_ => 1 } qw/U D P C O F G S -/;
+    my %taxons = map { $_ => 1 } qw/U D K P C O F G S -/;
 
     open F, $self->filename or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "filename: '" . $self->filename . "'" );
     while (my $line = <F>) {
