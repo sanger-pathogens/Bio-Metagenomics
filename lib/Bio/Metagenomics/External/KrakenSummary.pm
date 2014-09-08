@@ -30,7 +30,7 @@ sub BUILD {
     defined($self->report_files) or $self->report_files([]);
     $self->_load_reports_fofn();
     scalar @{$self->report_files} > 0 or Bio::Metagenomics::Exceptions::KrakenSummaryBuild->throw(error => "No report files given. Cannot continue\n");
-    my %allowed_levels = map {$_ => 1} qw/ D P C O F G S T/;
+    my %allowed_levels = map {$_ => 1} qw/ D K P C O F G S T/;
     defined $allowed_levels{$self->taxon_level} or Bio::Metagenomics::Exceptions::KrakenSummaryBuild->throw(error => "Bad taxon level:" . $self->taxon_level . ". Cannot continue\n");
 }
 
@@ -73,6 +73,7 @@ sub _gather_output_data {
     my @files = sort @{$self->report_files};
     my %levels = (
         D => 'Domain',
+        K => 'Kingdom',
         P => 'Phylum',
         C => 'Class',
         O => 'Order',

@@ -109,9 +109,9 @@ Options:
 -f,reports_fofn
     File of kraken report filenames
 
--l,level D|P|C|O|F|G|S|T
+-l,level D|K|P|C|O|F|G|S|T
     Taxonomic level to output. Choose from:
-      D (Domain), P (Phylum), C (Class), O (Order),
+      D (Domain), K (Kingdom) P (Phylum), C (Class), O (Order),
       F (Family), G (Genus), S (Species), T (Strain)
     Default: " . $self->taxon_level . "
 
