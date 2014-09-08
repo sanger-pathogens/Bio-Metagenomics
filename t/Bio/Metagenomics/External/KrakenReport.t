@@ -51,7 +51,7 @@ ok($obj = Bio::Metagenomics::External::KrakenReport->new(
 
 @expected = (
     {clade_reads => 40, node_reads => 10, taxon => 'D', name => 'Domain1'},
-    {clade_reads => 39, node_reads => 10, taxon => 'K', name => 'Kingdom'},
+    {clade_reads => 39, node_reads => 10, taxon => 'K', name => 'Kingdom1'},
     {clade_reads => 39, node_reads => 10, taxon => 'P', name => 'Phylum1'},
     {clade_reads => 38, node_reads => 10, taxon => 'C', name => 'Class1'},
     {clade_reads => 37, node_reads => 2, taxon => 'O', name => 'Order1'},
@@ -138,7 +138,7 @@ ok($obj = Bio::Metagenomics::External::KrakenReport->new(
     {clade_reads => 17, node_reads => 1, taxon => 'T', name => 'Strain2'},
     {clade_reads => 17, node_reads => 1, taxon => 'T', name => 'StrainX'},
     {clade_reads => 50, node_reads => 10, taxon => 'D', name => 'Domain2'},
-    {clade_reads => 40, node_reads => 10, taxon => 'K', name => 'Kingdom2'},
+    {clade_reads => 49, node_reads => 10, taxon => 'K', name => 'Kingdom2'},
     {clade_reads => 49, node_reads => 10, taxon => 'P', name => 'Phylum2'},
     {clade_reads => 48, node_reads => 10, taxon => 'C', name => 'Class2'},
     {clade_reads => 46, node_reads => 2, taxon => 'F', name => 'Family2'},
