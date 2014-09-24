@@ -79,7 +79,7 @@ sub _gather_output_data {
     for my $fname (@{$self->report_files}) {
         push (@files, $fname) if (exists $self->reports->{$fname});
     }
-    my @files = sort @files;
+    @files = sort @files;
     my %levels = (
         D => 'Domain',
         K => 'Kingdom',
