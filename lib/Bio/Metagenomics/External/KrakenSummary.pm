@@ -51,7 +51,12 @@ sub _combine_files_data {
     my ($self) = @_;
     foreach my $fname (@{$self->report_files}) {
         my $report = Bio::Metagenomics::External::KrakenReport->new(filename => $fname);
-        $self->reports->{$fname} = $report;
+        if ($report->total_reads > 0) {
+            $self->reports->{$fname} = $report;
+        }
+        else {
+            warn "Warning: skipping file $fname from output because zero total reads found\n";
+        }
     }
 }
 
@@ -70,7 +75,11 @@ sub _gather_output_data {
         }
     }
 
-    my @files = sort @{$self->report_files};
+    my @files;
+    for my $fname (@{$self->report_files}) {
+        push (@files, $fname) if (exists $self->reports->{$fname});
+    }
+    my @files = sort @files;
     my %levels = (
         D => 'Domain',
         K => 'Kingdom',
