@@ -73,6 +73,24 @@ $data = $obj->_gather_output_data();
 is_deeply($data, \@expected_data, '_gather_output_data OK, with cutoff');
 
 
+ok($obj = Bio::Metagenomics::External::KrakenSummary->new(
+    report_files => ['t/data/KrakenReport.report1', 't/data/KrakenReport.report.empty'],
+    reports_fofn => 't/data/KrakenSummary.fofn',
+    outfile => 'kraken_summary_report',
+    taxon_level => 'D',
+    counts => 1,
+), 'initialize object');
+$obj->_combine_files_data();
+$data = $obj->_gather_output_data();
+@expected_data = (
+    ['Domain', 't/data/KrakenReport.report1', 't/data/KrakenReport.report2'],
+    ['Total', 209, 1705],
+    ['Unclassified', '10', '210'],
+    ['Domain1', '40', '240'],
+    ['Domain2', '50', '150'],
+);
+is_deeply($data, \@expected_data, '_gather_output_data OK, with one empty kraken report file');
+
 my @two_d_array = (
     [1, 2, 3],
     [4, 5, 6]

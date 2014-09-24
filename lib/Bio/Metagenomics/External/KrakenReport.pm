@@ -20,6 +20,9 @@ has 'hits'               => ( is => 'ro', isa => 'ArrayRef', default => sub { []
 sub BUILD {
     my ($self) = @_;
     $self->_load_info_from_file();
+    if ($self->total_reads == 0) {
+        warn "Warning: zero total reads from file " . $self->filename . "\n";
+    }
 }
 
 
