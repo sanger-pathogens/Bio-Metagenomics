@@ -14,8 +14,6 @@ use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::Genbank;
 
 has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
-has 'current_gi'         => ( is => 'ro', isa => 'Int', default => 4000000000 );
-has 'current_taxon'      => ( is => 'ro', isa => 'Int', default => 2000000000 );
 has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
 has 'csv_fasta_to_add'   => ( is => 'ro', isa => 'Str');
 has 'fasta_to_add'       => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
@@ -92,12 +90,60 @@ sub _replace_fasta_headers {
 }
 
 
+sub add_fastas_to_db {
+    my ($self) = @_;
+    return unless defined $self->csv_fasta_to_add;
+    my $current_taxon = 2000000000;
+    my $current_gi = 4000000000;
+
+    for my $h (@{$self->fasta_to_add}) {
+        my $gi = $current_gi++;
+        my $taxon = $current_taxon++;
+        my $tmpfile = "tmp.$$.add_to_kraken.fa";
+        $self->_replace_fasta_headers($h->{filename}, $tmpfile, $gi);
+        my $newline = "$taxon\t|\t" . $h->{name} . "\t|\t\t|\tscientific name\t|";
+        $self->_append_line_to_file($self->names_dmp_file, $newline);
+        $newline = join(
+            "\t|\t",
+            (
+                $taxon,
+                $h->{parent_taxon_id},
+                'no rank',
+                'HI',
+                '9',
+                '1',
+                '1',
+                '1',
+                '0',
+                '1',
+                '1',
+                '0',
+                '',
+            )
+        ) . "\t|";
+        $self->_append_line_to_file($self->nodes_dmp_file, $newline);
+        $self->_append_line_to_file($self->gi_taxid_dmp_file, "$gi\t$taxon");
+        my $command = join(
+            ' ',
+            (
+                $self->kraken_build_exec,
+                '--add-to-library', $tmpfile,
+                '--db', $self->database
+            )
+        );
+        system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
+        unlink $tmpfile;
+    }
+}
+
+
 sub _append_line_to_file {
     my ($self, $filename, $to_add) = @_;
     open F, ">>$filename" or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $filename);
     print F "$to_add\n";
     close F or die $!;
 }
+
 
 sub _download_taxonomy_command {
     my ($self) = @_;
