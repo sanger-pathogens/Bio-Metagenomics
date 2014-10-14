@@ -14,9 +14,12 @@ use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::Genbank;
 
 has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'current_gi'         => ( is => 'ro', isa => 'Int', default => 4000000000 );
+has 'current_taxon'      => ( is => 'ro', isa => 'Int', default => 2000000000 );
 has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
 has 'csv_fasta_to_add'   => ( is => 'ro', isa => 'Str');
-has 'fasta_to_add'       => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add');
+has 'fasta_to_add'       => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
+has 'gi_taxid_dmp_file'  => ( is => 'ro', isa => 'Str', builder => '_build_gi_taxid_dmp_file' );
 has 'ids_file'           => ( is => 'ro', isa => 'Maybe[Str]' );
 has 'ids_list'           => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
 has 'kraken_exec'        => ( is => 'ro', isa => 'Str', default => 'kraken' );
@@ -27,8 +30,28 @@ has 'minimizer_len'      => ( is => 'ro', isa => 'Int', default => 13);
 has 'preload'            => ( is => 'ro', isa => 'Bool', default => 0 );
 has 'reads_1'            => ( is => 'ro', isa => 'Str');
 has 'reads_2'            => ( is => 'ro', isa => 'Maybe[Str]');
+has 'names_dmp_file'     => ( is => 'rw', isa => 'Str', builder => '_build_names_dmp_file' );
+has 'nodes_dmp_file'     => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
 has 'threads'            => ( is => 'ro', isa => 'Int', default => 1 );
 has 'tmp_file'           => ( is => 'ro', isa => 'Str');
+
+
+sub _build_gi_taxid_dmp_file {
+    my ($self) = @_;
+    return File::Spec->catfile($self->database, 'taxonomy', 'gi_taxid_nucl.dmp');
+}
+
+
+sub _build_names_dmp_file {
+    my ($self) = @_;
+    return File::Spec->catfile($self->database, 'taxonomy', 'names.dmp');
+}
+
+
+sub _build_nodes_dmp_file {
+    my ($self) = @_;
+    return File::Spec->catfile($self->database, 'taxonomy', 'nodes.dmp');
+}
 
 
 sub _build_fasta_to_add {

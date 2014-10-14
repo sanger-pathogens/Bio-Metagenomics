@@ -45,6 +45,9 @@ my @expected_fasta_to_add = (
     }
 );
 is_deeply($obj->fasta_to_add, \@expected_fasta_to_add, 'Load fasta to add info from CSV file');
+is($obj->gi_taxid_dmp_file, $obj->database . "/taxonomy/gi_taxid_nucl.dmp", 'gi_taxid_nucl.dmp filename OK');
+is($obj->names_dmp_file, $obj->database . "/taxonomy/names.dmp", 'names.dmp filename OK');
+is($obj->nodes_dmp_file, $obj->database . "/taxonomy/nodes.dmp", 'nodes.dmp filename OK');
 
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
