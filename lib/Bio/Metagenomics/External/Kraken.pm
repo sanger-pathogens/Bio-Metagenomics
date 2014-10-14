@@ -15,7 +15,8 @@ use Bio::Metagenomics::Genbank;
 
 has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
-has 'csv_fasta_to_add'   => ( is => 'ro', isa => 'Str');
+has 'dbs_to_download'    => ( is => 'ro', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']} );
+has 'csv_fasta_to_add'   => ( is => 'ro', isa => 'Maybe[Str]');
 has 'fasta_to_add'       => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
 has 'gi_taxid_dmp_file'  => ( is => 'ro', isa => 'Str', builder => '_build_gi_taxid_dmp_file' );
 has 'ids_file'           => ( is => 'ro', isa => 'Maybe[Str]' );
@@ -243,12 +244,10 @@ sub _run_commands {
 
 sub build {
     my ($self) = @_;
-    my @commands = (
-        $self->_download_taxonomy_command(),
-        $self->_download_domain_command('viruses'),
-        $self->_download_domain_command('bacteria'),
-        $self->_download_domain_command('human'),
-    );
+    my @commands = ($self->_download_taxonomy_command());
+    for my $domain (@{$self->dbs_to_download}){
+        push @commands, $self->_download_domain_command($domain);
+    }
     $self->_run_commands(\@commands);
 
     $self->_add_to_library_from_ids();
