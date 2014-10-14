@@ -90,7 +90,7 @@ sub _replace_fasta_headers {
 }
 
 
-sub add_fastas_to_db {
+sub _add_fastas_to_db {
     my ($self) = @_;
     return unless defined $self->csv_fasta_to_add;
     my $current_taxon = 2000000000;
@@ -187,7 +187,7 @@ sub _add_to_library_command {
 }
 
 
-sub _add_to_library {
+sub _add_to_library_from_ids {
     my ($self) = @_;
     return unless (defined($self->ids_file) or defined($self->ids_list));
 
@@ -251,7 +251,8 @@ sub build {
     );
     $self->_run_commands(\@commands);
 
-    $self->_add_to_library();
+    $self->_add_to_library_from_ids();
+    $self->_add_fastas_to_db();
 
     @commands = ($self->_build_command());
     if ($self->clean) {

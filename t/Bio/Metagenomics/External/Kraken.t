@@ -58,7 +58,7 @@ is($obj->nodes_dmp_file, $obj->database . "/taxonomy/nodes.dmp", 'nodes.dmp file
 # need to make expeced directory structure to test appending to taxon files
 mkdir $db;
 mkdir "$db/taxonomy";
-$obj->add_fastas_to_db();
+$obj->_add_fastas_to_db();
 for my $name ('gi_taxid_nucl.dmp', 'names.dmp', 'nodes.dmp') {
     ok(compare("$db/taxonomy/$name", "t/data/Kraken_add_fastas_to_db.$name") == 0, "add_fastas_to_db file $name OK");
 }
