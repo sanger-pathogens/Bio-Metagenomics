@@ -9,11 +9,14 @@ Wrapper for Kraken https://ccb.jhu.edu/software/kraken/
 =cut
 
 use Moose;
+use File::Spec;
 use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::Genbank;
 
 has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
+has 'csv_fasta_to_add'   => ( is => 'ro', isa => 'Str');
+has 'fasta_to_add'       => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add');
 has 'ids_file'           => ( is => 'ro', isa => 'Maybe[Str]' );
 has 'ids_list'           => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
 has 'kraken_exec'        => ( is => 'ro', isa => 'Str', default => 'kraken' );
@@ -26,6 +29,27 @@ has 'reads_1'            => ( is => 'ro', isa => 'Str');
 has 'reads_2'            => ( is => 'ro', isa => 'Maybe[Str]');
 has 'threads'            => ( is => 'ro', isa => 'Int', default => 1 );
 has 'tmp_file'           => ( is => 'ro', isa => 'Str');
+
+
+sub _build_fasta_to_add {
+    my ($self) = @_;
+    return undef unless (defined $self->csv_fasta_to_add);
+    my @to_add;
+    open F, $self->csv_fasta_to_add or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->csv_fasta_to_add);
+    while (my $line = <F>) {
+        chomp $line;
+        my @fields = split(/,/, $line);
+        my %info = (
+            filename => $fields[0],
+            name => $fields[1],
+            parent_taxon_id => $fields[2],
+        );
+        push (@to_add, \%info);
+    }
+
+    close F or die $!;
+    return \@to_add;
+}
 
 
 sub _download_taxonomy_command {
@@ -161,7 +185,7 @@ sub _run_kraken_command {
     }
 
     if (defined($self->reads_2)) {
-        $cmd .= " --paired " . $self->reads_1 . " " . $self->reads_2;        
+        $cmd .= " --paired " . $self->reads_1 . " " . $self->reads_2;
     }
     else {
         $cmd .= " " . $self->reads_1;

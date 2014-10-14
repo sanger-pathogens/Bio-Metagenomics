@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use Data::Dumper;
 
 BEGIN { unshift( @INC, './lib' ) }
 
@@ -18,7 +19,9 @@ ok($obj = Bio::Metagenomics::External::Kraken->new(
     minimizer_len => 11,
     max_db_size => 2,
     reads_1 => 'reads_1.fastq',
+    csv_fasta_to_add => 't/data/Kraken_fasta_to_add.csv',
 ), 'initialize object');
+
 
 is($obj->_download_taxonomy_command(), 'kraken-build --download-taxonomy --db DB', 'Construct download-taxonomy command');
 is($obj->_download_domain_command('viruses'), 'kraken-build --download-library viruses --db DB', 'Construct download-library command');
@@ -28,6 +31,21 @@ is($obj->_build_command(), 'kraken-build --build --db DB --threads 42 --max-db-s
 is($obj->_clean_command(), 'kraken-build --clean --db DB', 'Construct clean command');
 is($obj->_run_kraken_command('out'), 'kraken --db DB --threads 42 --output out reads_1.fastq', 'Construct kraken command');
 is($obj->_kraken_report_command('in', 'out'), 'kraken-report --db DB in > out', 'Construct kraken report command');
+
+my @expected_fasta_to_add = (
+    {
+        'filename' => 'Kraken_fa_to_add.1.fa',
+        'name' => 'name 1',
+        'parent_taxon_id' => '1',
+    },
+    {
+        'filename' => 'Kraken_fa_to_add.2.fa',
+        'name' => 'name 2',
+        'parent_taxon_id' => '2',
+    }
+);
+is_deeply($obj->fasta_to_add, \@expected_fasta_to_add, 'Load fasta to add info from CSV file');
+
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
     database => 'DB',
