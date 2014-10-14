@@ -75,6 +75,23 @@ sub _build_fasta_to_add {
 }
 
 
+sub _replace_fasta_headers {
+    my ($self, $infile, $outfile, $gi) = @_;
+    my $sequences = 1;
+    open FIN, $infile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $infile);
+    open FOUT, ">$outfile" or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $outfile);
+    while (my $line = <FIN>) {
+        if ($line =~ /^>/) {
+            $line = ">gi|$gi|$sequences\n";
+            $sequences++;
+        }
+        print FOUT $line;
+    }
+    close FIN or die $!;
+    close FOUT or die $!;
+}
+
+
 sub _download_taxonomy_command {
     my ($self) = @_;
     return join(

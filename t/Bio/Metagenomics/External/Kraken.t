@@ -1,6 +1,7 @@
 #!/usr/bin/env perl
 use strict;
 use warnings;
+use File::Compare;
 use Data::Dumper;
 
 BEGIN { unshift( @INC, './lib' ) }
@@ -48,6 +49,12 @@ is_deeply($obj->fasta_to_add, \@expected_fasta_to_add, 'Load fasta to add info f
 is($obj->gi_taxid_dmp_file, $obj->database . "/taxonomy/gi_taxid_nucl.dmp", 'gi_taxid_nucl.dmp filename OK');
 is($obj->names_dmp_file, $obj->database . "/taxonomy/names.dmp", 'names.dmp filename OK');
 is($obj->nodes_dmp_file, $obj->database . "/taxonomy/nodes.dmp", 'nodes.dmp filename OK');
+
+
+my $outfile = 'tmp.kraken_test';
+$obj->_replace_fasta_headers('t/data/Kraken_replace_fasta_headers.in.fa', $outfile, 42);
+ok(compare('t/data/Kraken_replace_fasta_headers.out.fa', $outfile) == 0, '_replace_fasta_headers() OK');
+unlink $outfile;
 
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
