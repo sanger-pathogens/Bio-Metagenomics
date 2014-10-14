@@ -92,6 +92,13 @@ sub _replace_fasta_headers {
 }
 
 
+sub _append_line_to_file {
+    my ($self, $filename, $to_add) = @_;
+    open F, ">>$filename" or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $filename);
+    print F "$to_add\n";
+    close F or die $!;
+}
+
 sub _download_taxonomy_command {
     my ($self) = @_;
     return join(

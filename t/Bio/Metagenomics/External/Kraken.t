@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use File::Compare;
+use File::Copy 'cp';
 use Data::Dumper;
 
 BEGIN { unshift( @INC, './lib' ) }
@@ -55,6 +56,13 @@ my $outfile = 'tmp.kraken_test';
 $obj->_replace_fasta_headers('t/data/Kraken_replace_fasta_headers.in.fa', $outfile, 42);
 ok(compare('t/data/Kraken_replace_fasta_headers.out.fa', $outfile) == 0, '_replace_fasta_headers() OK');
 unlink $outfile;
+
+my $infile = 't/data/Kraken_append_line.in';
+cp $infile, $outfile;
+$obj->_append_line_to_file($outfile, "new line");
+ok(compare('t/data/Kraken_append_line.out', $outfile) == 0,  '_append_line_to_file() OK');
+unlink $outfile;
+
 
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
