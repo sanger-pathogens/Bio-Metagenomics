@@ -17,6 +17,7 @@ BEGIN {
 
 my $obj;
 my $db = 'DB';
+my $tmp_csv = "tmp.$$.csv";
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
     database => $db,
@@ -25,6 +26,7 @@ ok($obj = Bio::Metagenomics::External::Kraken->new(
     max_db_size => 2,
     reads_1 => 'reads_1.fastq',
     csv_fasta_to_add => 't/data/Kraken_fasta_to_add.csv',
+    csv_fasta_to_add_out => $tmp_csv,
 ), 'initialize object');
 
 
@@ -63,6 +65,8 @@ for my $name ('gi_taxid_nucl.dmp', 'names.dmp', 'nodes.dmp') {
     ok(compare("$db/taxonomy/$name", "t/data/Kraken_add_fastas_to_db.$name") == 0, "add_fastas_to_db file $name OK");
 }
 remove_tree $db;
+ok(compare("t/data/Kraken_add_fastas_to_db.out.csv", $tmp_csv) == 0, "CSV of info about added fastas OK");
+unlink $tmp_csv;
 
 
 my $outfile = 'tmp.kraken_test';

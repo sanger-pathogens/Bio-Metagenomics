@@ -13,26 +13,27 @@ use File::Spec;
 use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::Genbank;
 
-has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
-has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
-has 'dbs_to_download'    => ( is => 'ro', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']} );
-has 'csv_fasta_to_add'   => ( is => 'ro', isa => 'Maybe[Str]');
-has 'fasta_to_add'       => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
-has 'gi_taxid_dmp_file'  => ( is => 'ro', isa => 'Str', builder => '_build_gi_taxid_dmp_file' );
-has 'ids_file'           => ( is => 'ro', isa => 'Maybe[Str]' );
-has 'ids_list'           => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
-has 'kraken_exec'        => ( is => 'ro', isa => 'Str', default => 'kraken' );
-has 'kraken_build_exec'  => ( is => 'ro', isa => 'Str', default => 'kraken-build' );
-has 'kraken_report_exec' => ( is => 'ro', isa => 'Str', default => 'kraken-report' );
-has 'max_db_size'        => ( is => 'ro', isa => 'Int', default => 4);
-has 'minimizer_len'      => ( is => 'ro', isa => 'Int', default => 13);
-has 'preload'            => ( is => 'ro', isa => 'Bool', default => 0 );
-has 'reads_1'            => ( is => 'ro', isa => 'Str');
-has 'reads_2'            => ( is => 'ro', isa => 'Maybe[Str]');
-has 'names_dmp_file'     => ( is => 'rw', isa => 'Str', builder => '_build_names_dmp_file' );
-has 'nodes_dmp_file'     => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
-has 'threads'            => ( is => 'ro', isa => 'Int', default => 1 );
-has 'tmp_file'           => ( is => 'ro', isa => 'Str');
+has 'clean'                => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'database'             => ( is => 'ro', isa => 'Str', required => 1 );
+has 'dbs_to_download'      => ( is => 'ro', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']} );
+has 'csv_fasta_to_add'     => ( is => 'ro', isa => 'Maybe[Str]');
+has 'fasta_to_add'         => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
+has 'csv_fasta_to_add_out' => ( is => 'ro', isa => 'Maybe[Str]');
+has 'gi_taxid_dmp_file'    => ( is => 'ro', isa => 'Str', builder => '_build_gi_taxid_dmp_file' );
+has 'ids_file'             => ( is => 'ro', isa => 'Maybe[Str]' );
+has 'ids_list'             => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
+has 'kraken_exec'          => ( is => 'ro', isa => 'Str', default => 'kraken' );
+has 'kraken_build_exec'    => ( is => 'ro', isa => 'Str', default => 'kraken-build' );
+has 'kraken_report_exec'   => ( is => 'ro', isa => 'Str', default => 'kraken-report' );
+has 'max_db_size'          => ( is => 'ro', isa => 'Int', default => 4);
+has 'minimizer_len'        => ( is => 'ro', isa => 'Int', default => 13);
+has 'preload'              => ( is => 'ro', isa => 'Bool', default => 0 );
+has 'reads_1'              => ( is => 'ro', isa => 'Str');
+has 'reads_2'              => ( is => 'ro', isa => 'Maybe[Str]');
+has 'names_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_names_dmp_file' );
+has 'nodes_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
+has 'threads'              => ( is => 'ro', isa => 'Int', default => 1 );
+has 'tmp_file'             => ( is => 'ro', isa => 'Str');
 
 
 sub _build_gi_taxid_dmp_file {
@@ -96,6 +97,12 @@ sub _add_fastas_to_db {
     return unless defined $self->csv_fasta_to_add;
     my $current_taxon = 2000000000;
     my $current_gi = 4000000000;
+    my $csv_out;
+    if (defined $self->csv_fasta_to_add_out) {
+        open($csv_out, '>', $self->csv_fasta_to_add_out) or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->csv_fasta_to_add_out);
+    }
+
+
 
     for my $h (@{$self->fasta_to_add}) {
         my $gi = $current_gi++;
@@ -134,6 +141,22 @@ sub _add_fastas_to_db {
         );
         system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
         unlink $tmpfile;
+        if  (defined $self->csv_fasta_to_add_out) {
+            print $csv_out join(
+                ',',
+                (
+                    $h->{filename},
+                    $h->{name},
+                    $h->{parent_taxon_id},
+                    $taxon,
+                    $gi
+                ),
+            ) . "\n";
+        }
+    }
+
+    if (defined $self->csv_fasta_to_add_out) {
+        close $csv_out or die $!;
     }
 }
 
