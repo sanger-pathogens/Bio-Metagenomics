@@ -19,6 +19,7 @@ has 'args'               => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name'        => ( is => 'ro', isa => 'Str', required => 1 );
 has 'database'           => ( is => 'rw', isa => 'Str' );
 has 'csv_to_add'         => ( is => 'rw', isa => 'Str' );
+has 'csv_to_add_out'     => ( is => 'rw', isa => 'Str' );
 has 'dbs_to_download'    => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']});
 has 'ids_file'           => ( is => 'rw', isa => 'Str' );
 has 'ids_list'           => ( is => 'rw', isa => 'ArrayRef[Str]');
@@ -34,6 +35,7 @@ sub BUILD {
     my (
         $help,
         $csv_to_add,
+        $csv_to_add_out,
         @dbs_to_download,
         $ids_file,
         @ids_list,
@@ -47,12 +49,13 @@ sub BUILD {
     my $options_ok = GetOptionsFromArray(
         $self->args,
         'h|help' => \$help,
-        'c|csv_to_add' => \$csv_to_add,
-        'd|dbs_to_download' => \@dbs_to_download,
+        'c|csv_to_add=s' => \$csv_to_add,
+        'csv_to_add_out=s' => \$csv_to_add_out,
+        'd|dbs_to_download=s' => \@dbs_to_download,
         'ids_file=s' => \$ids_file,
         'a|add_id=s' => \@ids_list,
         'n|noclean' => \$noclean,
-        'kraken_build' => \$kraken_build_exec,
+        'kraken_build=s' => \$kraken_build_exec,
         'max_db_size=i' => \$max_db_size,
         'minimizer_len=i' => \$minimizer_len,
         't|threads=i' => \$threads,
@@ -63,6 +66,7 @@ sub BUILD {
     }
 
     $self->csv_to_add($csv_to_add) if defined $csv_to_add;
+    $self->csv_to_add_out($csv_to_add_out) if defined $csv_to_add_out;
     $self->database($self->args->[0]);
     $self->dbs_to_download(\@dbs_to_download) if scalar(@dbs_to_download);
     $self->ids_file($ids_file) if defined($ids_file);
@@ -80,6 +84,7 @@ sub run {
     my $kraken = Bio::Metagenomics::External::Kraken->new(
         clean => !($self->noclean),
         csv_fasta_to_add => $self->csv_to_add,
+        csv_fasta_to_add_out => $self->csv_to_add_out,
         database => $self->database,
         dbs_to_download => $self->dbs_to_download,
         ids_file => $self->ids_file,
@@ -112,6 +117,12 @@ Options:
         1. Absolute path to FASTA file
         2. Name of organism to appear in Kraken report file
         3. NCBI taxon ID that will be the parent of this genome
+
+-csv_to_add_out
+    If -c is used, then write a new csv file that is the same
+    is the input csv, but with two new columns:
+        4. Taxon ID given to sample
+        5. GI number given to sample
 
 -d, -dbs_to_download
     Kraken databases to download and add to the database. Must be one of:
