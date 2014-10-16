@@ -31,7 +31,7 @@ has 'output_dir' => ( is => 'rw', isa => 'Str', required => 1 );
 
 sub BUILD {
     my ($self) = @_;
-    
+
     unless ( (defined($self->ids_list) and scalar (@{$self->ids_list})) or defined($self->ids_file) ) {
         Bio::Metagenomics::Exceptions::GenbankBuild->throw(error => 'Must provide ids_file and/or ids_list');
     }
@@ -92,6 +92,20 @@ sub _download_from_genbank {
 
     }
     Bio::Metagenomics::Exceptions::Genbank::GenbankDownload->throw(error => "Filetype=$filetype, ID=$id");
+}
+
+
+sub _assembly_report_to_genbank_ids {
+    my ($self, $report_file) = @_;
+    open F, $report_file or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $report_file);
+    my @ids;
+    while (my $line = <F>) {
+        next if $line =~ /^#/;
+        my @fields = split(/\t/, $line);
+        push(@ids, $fields[4]);
+    }
+    close F or die $!;
+    return \@ids;
 }
 
 
