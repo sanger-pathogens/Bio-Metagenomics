@@ -80,6 +80,20 @@ sub _filetype {
 
 sub _download_from_genbank {
     my ($self, $outfile, $filetype, $id) = @_;
+    my $original_id = $id;
+
+    # If it's an assembly ID, then we need to get the sequence record ID
+    # of each sequence of the assembly. This is in the assembly report file
+    if ($id =~ /^GCA_/) {
+        my $assembly_report = "$outfile.$$.tmp.assembly_report";
+        $self->_download_assembly_report($id, $assembly_report);
+        my $ids = $self->_assembly_report_to_genbank_ids($assembly_report);
+        unlink $assembly_report;
+        # The 'id='...' in efetch can be a comma-separated list of IDs, so
+        # use this to download all the sequences with one efetch call
+        $id = join(',', @{$ids});
+    }
+
     foreach my $i (1..$self->max_tries) {
         getstore($self->_download_record_url($filetype, $id), $outfile);
         if ($self->_filetype($outfile) == $filetype) {
@@ -89,9 +103,15 @@ sub _download_from_genbank {
             unlink $outfile;
             sleep($self->delay);
         }
-
     }
-    Bio::Metagenomics::Exceptions::Genbank::GenbankDownload->throw(error => "Filetype=$filetype, ID=$id");
+    Bio::Metagenomics::Exceptions::Genbank::GenbankDownload->throw(error => "Error downloading $original_id from genbank. Cannot continue");
+}
+
+
+sub _download_assembly_report {
+    my ($self, $id, $filename) = @_;
+    my $cmd = "wget -O $filename ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/All/$id.assembly.txt";
+    system($cmd) and Bio::Metagenomics::Exceptions::Genbank::GenbankDownload->throw(error => "Error getting assembly report file:\n$cmd\n");
 }
 
 
