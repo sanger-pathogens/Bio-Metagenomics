@@ -131,14 +131,7 @@ sub _add_fastas_to_db {
         ) . "\t|";
         $self->_append_line_to_file($self->nodes_dmp_file, $newline);
         $self->_append_line_to_file($self->gi_taxid_dmp_file, "$gi\t$taxon");
-        my $command = join(
-            ' ',
-            (
-                $self->kraken_build_exec,
-                '--add-to-library', $tmpfile,
-                '--db', $self->database
-            )
-        );
+        my $command = $self->_add_to_library_command($tmpfile);
         system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
         unlink $tmpfile;
         if  (defined $self->csv_fasta_to_add_out) {
@@ -200,14 +193,23 @@ sub _download_domain_command {
 
 sub _add_to_library_command {
     my ($self, $filename) = @_;
-    return join(
+    my $gzipped = ($filename =~ /\.gz$/);
+    my $unzipped = "$filename.tmp";
+    my $cmd = join(
         ' ',
         (
             $self->kraken_build_exec,
-            '--add-to-library', $filename,
+            '--add-to-library', ($gzipped) ? $unzipped : $filename,
             '--db', $self->database,
         )
     );
+
+    if ($gzipped) {
+        return "gunzip -c $filename > $unzipped && $cmd && rm $unzipped";
+    }
+    else {
+        return $cmd;
+    }
 }
 
 

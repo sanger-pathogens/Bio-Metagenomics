@@ -34,6 +34,7 @@ is($obj->_download_taxonomy_command(), "kraken-build --download-taxonomy --db $d
 is($obj->_download_domain_command('viruses'), "kraken-build --download-library viruses --db $db", 'Construct download-library command');
 throws_ok{$obj->_download_domain_command('notallowed')} 'Bio::Metagenomics::Exceptions::KrakenDomainNotFound' , 'download-library throws exception if bad domain given';
 is($obj->_add_to_library_command('filename'), "kraken-build --add-to-library filename --db $db", 'Construct add-to-library command');
+is($obj->_add_to_library_command('filename.gz'), "gunzip -c filename.gz > filename.gz.tmp && kraken-build --add-to-library filename.gz.tmp --db $db && rm filename.gz.tmp", 'Construct add-to-library command, gzipped file');
 is($obj->_build_command(), "kraken-build --build --db $db --threads 42 --max-db-size 2 --minimizer-len 11", 'Construct build command');
 is($obj->_clean_command(), "kraken-build --clean --db $db", 'Construct clean command');
 is($obj->_run_kraken_command('out'), "kraken --db $db --threads 42 --output out reads_1.fastq", 'Construct kraken command');
