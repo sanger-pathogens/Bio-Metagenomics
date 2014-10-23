@@ -60,7 +60,8 @@ Each ID must be a GenBank ID or a GI number.
 If the ID starts with 'GCA_', then it is assumed to be an assembly ID and all
 the corresponding contigs are downloaded and put into a single file.
 
-Each FASTA file is called ID.fasta. If that file already exists in the output
+Each FASTA file is gzipped and called ID.fasta.gz.
+If that file already exists in the output
 directory, then nothing new is downloaded for that ID.
 
 Options:

@@ -119,7 +119,7 @@ Options:
     Comma-separated file of genomes in FASTA files to add to the database.
     Each genome is added as a child of a user-specified NCBI taxon ID.
     File needs one line per genome with these three columns:
-        1. Absolute path to FASTA file
+        1. Absolute path to FASTA file, can be gizpped (with .gz extension)
         2. Name of organism to appear in Kraken report file
         3. NCBI taxon ID that will be the parent of this genome
 
@@ -136,13 +136,13 @@ Options:
     download more than one. Default is to use all three.
 
 -downloaded
-    Directory of FASTA files to use, that have already
-    been downloaded using the script XXXXXX
+    Directory of gzipped FASTA files to use, that have already
+    been downloaded using the script metagm_genbank_downloader
 
 -a, -add_id ID
     Add genbank record with ID to the database.  ID can be a genbank ID or a
     GI number.  This option can be used more than once to add as many
-    genomes as you like.  See also -ids_file.
+    genomes as you like.  See also -ids_file and -downloaded
 
 -ids_file FILENAME
     Add IDs from file to the database.  Format is one line per ID.
