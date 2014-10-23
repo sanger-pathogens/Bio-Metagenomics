@@ -8,8 +8,6 @@ Download genbank records using GI or Genbank IDs
 
 =cut
 
-print "HELLO\n";
-
 use Moose;
 use LWP::Simple;
 use Bio::Metagenomics::Exceptions;
