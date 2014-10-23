@@ -18,6 +18,7 @@ use Bio::Metagenomics::External::Kraken;
 has 'args'               => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name'        => ( is => 'ro', isa => 'Str', required => 1 );
 has 'database'           => ( is => 'rw', isa => 'Str' );
+has 'downloaded'         => ( is => 'rw', isa => 'Str' );
 has 'csv_to_add'         => ( is => 'rw', isa => 'Str' );
 has 'csv_to_add_out'     => ( is => 'rw', isa => 'Str' );
 has 'dbs_to_download'    => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']});
@@ -37,6 +38,7 @@ sub BUILD {
         $csv_to_add,
         $csv_to_add_out,
         @dbs_to_download,
+        $downloaded,
         $ids_file,
         @ids_list,
         $kraken_build_exec,
@@ -52,6 +54,7 @@ sub BUILD {
         'c|csv_to_add=s' => \$csv_to_add,
         'csv_to_add_out=s' => \$csv_to_add_out,
         'd|dbs_to_download=s' => \@dbs_to_download,
+        'downloaded' => \$downloaded,
         'ids_file=s' => \$ids_file,
         'a|add_id=s' => \@ids_list,
         'n|noclean' => \$noclean,
@@ -68,6 +71,7 @@ sub BUILD {
     $self->csv_to_add($csv_to_add) if defined $csv_to_add;
     $self->csv_to_add_out($csv_to_add_out) if defined $csv_to_add_out;
     $self->database($self->args->[0]);
+    $self->downloaded($self->downloaded) if defined $downloaded;
     $self->dbs_to_download(\@dbs_to_download) if scalar(@dbs_to_download);
     $self->ids_file($ids_file) if defined($ids_file);
     $self->ids_list(\@ids_list) if scalar(@ids_list);
@@ -86,6 +90,7 @@ sub run {
         csv_fasta_to_add => $self->csv_to_add,
         csv_fasta_to_add_out => $self->csv_to_add_out,
         database => $self->database,
+        downloaded => $self->downloaded,
         dbs_to_download => $self->dbs_to_download,
         ids_file => $self->ids_file,
         ids_list => $self->ids_list,
@@ -129,6 +134,10 @@ Options:
         bacteria, viruses, human.
     This option can be used more than once if you want to
     download more than one. Default is to use all three.
+
+-downloaded
+    Directory of FASTA files to use, that have already
+    been downloaded using the script XXXXXX
 
 -a, -add_id ID
     Add genbank record with ID to the database.  ID can be a genbank ID or a

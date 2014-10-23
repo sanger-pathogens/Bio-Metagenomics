@@ -82,7 +82,7 @@ sub _filetype {
 sub _get_with_getstore {
     my ($self, $outfile, $filetype, $id) = @_;
     foreach my $i (1..$self->max_tries) {
-        print "    getstore(" . $self->_download_record_url($filetype, $id) . ", $outfile);\n";
+        print "\tgetstore(" . $self->_download_record_url($filetype, $id) . ", $outfile);\n";
         getstore($self->_download_record_url($filetype, $id), $outfile);
         if (-e $outfile and $self->_filetype($outfile) == $filetype) {
             return;
@@ -120,15 +120,27 @@ sub _download_chunks_from_genbank {
 }
 
 
+sub _fasta_to_number_of_sequences {
+    my ($self, $infile) = @_;
+    open F, $infile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $infile);
+    my $sequences = 0;
+    while (<F>) {
+        $sequences++ if /^>/;
+    }
+    close F;
+    return $sequences;
+}
+
+
 sub _download_from_genbank {
     my ($self, $outfile, $filetype, $id) = @_;
-    print "_download_from_genbank($outfile, $filetype, $id)\n";
     my $original_id = $id;
+    my $expected_sequences;
 
     # If it's an assembly ID, then we need to get the sequence record ID
     # of each sequence of the assembly. This is in the assembly report file
     if ($id =~ /^GCA_/) {
-        print "    ... looks like an assembly ID. Getting assembly report file\n";
+        print "ID $id\t... looks like an assembly ID. Getting assembly report file\n";
         my $assembly_report = "$outfile.tmp.assembly_report";
         $self->_download_assembly_report($id, $assembly_report);
         my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report);
@@ -138,17 +150,28 @@ sub _download_from_genbank {
         # 100 sequences, otherwise download may fail.
         my $ids = $self->_ids_to_chunks($all_ids, 100); 
         $self->_download_chunks_from_genbank($ids, $outfile);
+        $expected_sequences = scalar @{$all_ids};
     }
     else {
         $self->_get_with_getstore($outfile, FASTA, $id);
+        $expected_sequences = 1;
+    }
+
+    my $got_sequences = $self->_fasta_to_number_of_sequences($outfile);
+    if ($got_sequences == 0) {
+        print "ID $id\tWARNING: no sequences downloaded!\n";
+        unlink $outfile if -e $outfile;
+    }
+    elsif ($expected_sequences != $got_sequences) {
+        print "ID $id\tWARNING: wrong number of sequences in final FASTA file. Expected:$expected_sequences. Got:$got_sequences\n";
     }
 }
 
 
 sub _download_assembly_report {
     my ($self, $id, $filename) = @_;
-    my $cmd = "wget -O $filename ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/All/$id.assembly.txt";
-    print "    $cmd\n";
+    my $cmd = "wget -q -O $filename ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/All/$id.assembly.txt";
+    print "ID $id\t$cmd\n";
     system($cmd) and Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error getting assembly report file:\n$cmd\n");
 }
 
@@ -169,19 +192,22 @@ sub _assembly_report_to_genbank_ids {
 
 sub download {
     my ($self) = @_;
-    print "start of sub download\n";
-    print "output_dir is '" . $self->output_dir . "'\n";
-    my @downloaded;
-    mkdir($self->output_dir) or die $!;
+    my @filenames;
+    mkdir($self->output_dir);
+    -e $self->output_dir or die $!;
+
     for my $id (@{$self->ids_list}) {
-        print "download(): main for loop. id='$id'\n";
-        print "Making \$filename...\n";
         my $filename = File::Spec->catfile($self->output_dir, "$id.fasta");
-        print "Downloading $id to file $filename ...\n";
-        $self->_download_from_genbank($filename, FASTA, $id);
-        push @downloaded, $filename;
+        if (-e $filename) {
+            print "ID $id\tSkip download because file found: $filename\n";
+        }
+        else {
+            print "ID $id\tDownloading to file $filename\n";
+            $self->_download_from_genbank($filename, FASTA, $id);
+        }
+        push(@filenames, $filename);
     }
-    return \@downloaded;
+    return \@filenames;
 }
 
 
