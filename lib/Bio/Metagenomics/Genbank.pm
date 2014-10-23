@@ -8,6 +8,7 @@ Download genbank records using GI or Genbank IDs
 
 =cut
 
+print "HELLO\n";
 
 use Moose;
 use LWP::Simple;
@@ -78,40 +79,77 @@ sub _filetype {
 }
 
 
+sub _get_with_getstore {
+    my ($self, $outfile, $filetype, $id) = @_;
+    foreach my $i (1..$self->max_tries) {
+        print "    getstore(" . $self->_download_record_url($filetype, $id) . ", $outfile);\n";
+        getstore($self->_download_record_url($filetype, $id), $outfile);
+        if (-e $outfile and $self->_filetype($outfile) == $filetype) {
+            return;
+        }
+        else {
+            unlink $outfile if -e $outfile;
+            sleep($self->delay);
+        }
+    }
+    Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error downloading $id from genbank. Cannot continue");
+}
+
+
+sub _ids_to_chunks {
+    my ($self, $ids, $chunk_size) = @_;
+    my @chunks;
+    for (my $i=0; $i < @{$ids}; $i += $chunk_size) {
+        my $end = $i + $chunk_size >= @{$ids} ? @{$ids} - 1 :  $i + $chunk_size - 1;
+        my $ids_string = join(",", @{$ids}[$i .. $end]);
+        push (@chunks, $ids_string);
+    }
+    return \@chunks;
+}
+
+
+sub _download_chunks_from_genbank {
+    my ($self, $chunks, $outfile) = @_;
+    for my $ids (@{$chunks}) {
+        my $tmpfile = "$outfile.$$.tmp";
+        $self->_get_with_getstore($tmpfile, FASTA, $ids);
+        my $cmd = "cat $tmpfile >> $outfile";
+        system($cmd) and die "Error running:\n$cmd\n";
+        unlink $tmpfile;
+    }
+}
+
+
 sub _download_from_genbank {
     my ($self, $outfile, $filetype, $id) = @_;
+    print "_download_from_genbank($outfile, $filetype, $id)\n";
     my $original_id = $id;
 
     # If it's an assembly ID, then we need to get the sequence record ID
     # of each sequence of the assembly. This is in the assembly report file
     if ($id =~ /^GCA_/) {
-        my $assembly_report = "$outfile.$$.tmp.assembly_report";
+        print "    ... looks like an assembly ID. Getting assembly report file\n";
+        my $assembly_report = "$outfile.tmp.assembly_report";
         $self->_download_assembly_report($id, $assembly_report);
-        my $ids = $self->_assembly_report_to_genbank_ids($assembly_report);
+        my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report);
         unlink $assembly_report;
         # The 'id='...' in efetch can be a comma-separated list of IDs, so
-        # use this to download all the sequences with one efetch call
-        $id = join(',', @{$ids});
+        # use this to download the sequences in chunks. Limit each chunk to
+        # 100 sequences, otherwise download may fail.
+        my $ids = $self->_ids_to_chunks($all_ids, 100); 
+        $self->_download_chunks_from_genbank($ids, $outfile);
     }
-
-    foreach my $i (1..$self->max_tries) {
-        getstore($self->_download_record_url($filetype, $id), $outfile);
-        if ($self->_filetype($outfile) == $filetype) {
-            return;
-        }
-        else {
-            unlink $outfile;
-            sleep($self->delay);
-        }
+    else {
+        $self->_get_with_getstore($outfile, FASTA, $id);
     }
-    Bio::Metagenomics::Exceptions::Genbank::GenbankDownload->throw(error => "Error downloading $original_id from genbank. Cannot continue");
 }
 
 
 sub _download_assembly_report {
     my ($self, $id, $filename) = @_;
     my $cmd = "wget -O $filename ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/All/$id.assembly.txt";
-    system($cmd) and Bio::Metagenomics::Exceptions::Genbank::GenbankDownload->throw(error => "Error getting assembly report file:\n$cmd\n");
+    print "    $cmd\n";
+    system($cmd) and Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error getting assembly report file:\n$cmd\n");
 }
 
 
@@ -131,10 +169,15 @@ sub _assembly_report_to_genbank_ids {
 
 sub download {
     my ($self) = @_;
+    print "start of sub download\n";
+    print "output_dir is '" . $self->output_dir . "'\n";
     my @downloaded;
     mkdir($self->output_dir) or die $!;
     for my $id (@{$self->ids_list}) {
+        print "download(): main for loop. id='$id'\n";
+        print "Making \$filename...\n";
         my $filename = File::Spec->catfile($self->output_dir, "$id.fasta");
+        print "Downloading $id to file $filename ...\n";
         $self->_download_from_genbank($filename, FASTA, $id);
         push @downloaded, $filename;
     }
