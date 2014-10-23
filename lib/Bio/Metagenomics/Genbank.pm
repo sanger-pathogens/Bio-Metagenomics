@@ -196,14 +196,16 @@ sub download {
 
     for my $id (@{$self->ids_list}) {
         my $filename = File::Spec->catfile($self->output_dir, "$id.fasta");
-        if (-e $filename) {
-            print "ID $id\tSkip download because file found: $filename\n";
+        my $filename_gz = "$filename.gz";
+        if (-e $filename_gz) {
+            print "ID $id\tSkip download because file found: $filename_gz\n";
         }
         else {
             print "ID $id\tDownloading to file $filename\n";
             $self->_download_from_genbank($filename, FASTA, $id);
+            system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
         }
-        push(@filenames, $filename);
+        push(@filenames, $filename_gz);
     }
     return \@filenames;
 }
