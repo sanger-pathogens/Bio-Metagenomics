@@ -22,6 +22,7 @@ use constant {
 
 
 has 'delay'      => ( is => 'ro', isa => 'Int', default => 3 );
+has 'downloaded' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'ids_file'   => ( is => 'ro', isa => 'Maybe[Str]' );
 has 'ids_list'   => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]');
 has 'max_tries'  => ( is => 'ro', isa => 'Int', default => 5 );
@@ -36,6 +37,7 @@ sub BUILD {
     }
     $self->_load_ids_from_file();
     $self->output_dir(File::Spec->rel2abs($self->output_dir));
+    $self->downloaded(File::Spec->rel2abs($self->downloaded)) if defined $self->downloaded;
 }
 
 
@@ -197,15 +199,22 @@ sub download {
     for my $id (@{$self->ids_list}) {
         my $filename = File::Spec->catfile($self->output_dir, "$id.fasta");
         my $filename_gz = "$filename.gz";
+        my $already_downloaded = defined $self->downloaded ? File::Spec->catfile($self->downloaded, "$id.fasta.gz") : '';
+
         if (-e $filename_gz) {
             print "ID $id\tSkip download because file found: $filename_gz\n";
+            push(@filenames, $filename_gz);
+        }
+        elsif (defined $self->downloaded and -e $already_downloaded) {
+            print "ID $id\tSkip download because file found: $already_downloaded\n";
+            push(@filenames, $already_downloaded);
         }
         else {
             print "ID $id\tDownloading to file $filename\n";
             $self->_download_from_genbank($filename, FASTA, $id);
             system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
+            push(@filenames, $filename_gz);
         }
-        push(@filenames, $filename_gz);
     }
     return \@filenames;
 }

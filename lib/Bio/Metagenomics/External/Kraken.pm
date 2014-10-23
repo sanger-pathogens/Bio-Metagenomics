@@ -15,6 +15,7 @@ use Bio::Metagenomics::Genbank;
 
 has 'clean'                => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'database'             => ( is => 'ro', isa => 'Str', required => 1 );
+has 'downloaded'           => ( is => 'ro', isa => 'Maybe[Str]' );
 has 'dbs_to_download'      => ( is => 'ro', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']} );
 has 'csv_fasta_to_add'     => ( is => 'ro', isa => 'Maybe[Str]');
 has 'fasta_to_add'         => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
@@ -220,6 +221,7 @@ sub _add_to_library_from_ids {
     my $gb = Bio::Metagenomics::Genbank->new(
         ids_file => $self->ids_file,
         ids_list => $self->ids_list,
+        downloaded => $self->downloaded,
         output_dir => File::Spec->catfile($self->database, 'downloads'),
     );
     my $downloaded = $gb->download();

@@ -54,7 +54,7 @@ sub BUILD {
         'c|csv_to_add=s' => \$csv_to_add,
         'csv_to_add_out=s' => \$csv_to_add_out,
         'd|dbs_to_download=s' => \@dbs_to_download,
-        'downloaded' => \$downloaded,
+        'downloaded=s' => \$downloaded,
         'ids_file=s' => \$ids_file,
         'a|add_id=s' => \@ids_list,
         'n|noclean' => \$noclean,
@@ -71,8 +71,16 @@ sub BUILD {
     $self->csv_to_add($csv_to_add) if defined $csv_to_add;
     $self->csv_to_add_out($csv_to_add_out) if defined $csv_to_add_out;
     $self->database($self->args->[0]);
-    $self->downloaded($self->downloaded) if defined $downloaded;
-    $self->dbs_to_download(\@dbs_to_download) if scalar(@dbs_to_download);
+    $self->downloaded($downloaded) if defined $downloaded;
+    if (scalar @dbs_to_download) {
+        if ($dbs_to_download[0] eq "NONE") {
+            my @empty = ();
+            $self->dbs_to_download(\@empty);
+        }
+        else {    
+            $self->dbs_to_download(\@dbs_to_download) if scalar(@dbs_to_download);
+        }
+    }
     $self->ids_file($ids_file) if defined($ids_file);
     $self->ids_list(\@ids_list) if scalar(@ids_list);
     $self->threads($threads) if defined($threads);
@@ -134,6 +142,7 @@ Options:
         bacteria, viruses, human.
     This option can be used more than once if you want to
     download more than one. Default is to use all three.
+    use -d NONE to not download any of these.
 
 -downloaded
     Directory of gzipped FASTA files to use, that have already
