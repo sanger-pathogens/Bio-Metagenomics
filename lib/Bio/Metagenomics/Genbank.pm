@@ -85,6 +85,9 @@ sub _get_with_getstore {
         print "\tgetstore(" . $self->_download_record_url($filetype, $id) . ", $outfile);\n";
         getstore($self->_download_record_url($filetype, $id), $outfile);
         if (-e $outfile and $self->_filetype($outfile) == $filetype) {
+            # There is an empty line at the end of each FASTA record
+            # in the file. Remove all empty lines.
+            system("sed -i '/^\$/d' $outfile") and die $!;
             return;
         }
         else {
@@ -145,6 +148,10 @@ sub _download_from_genbank {
         $self->_download_assembly_report($id, $assembly_report);
         my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report);
         unlink $assembly_report;
+        if (scalar @{$all_ids} == 0) {
+            print "ID $id\tWARNING: no sequences found in assembly report file. Skipping\n";
+            return 0;
+        }
         # The 'id='...' in efetch can be a comma-separated list of IDs, so
         # use this to download the sequences in chunks. Limit each chunk to
         # 100 sequences, otherwise download may fail.
@@ -161,10 +168,12 @@ sub _download_from_genbank {
     if ($got_sequences == 0) {
         print "ID $id\tWARNING: no sequences downloaded!\n";
         unlink $outfile if -e $outfile;
+        return 0;
     }
     elsif ($expected_sequences != $got_sequences) {
         print "ID $id\tWARNING: wrong number of sequences in final FASTA file. Expected:$expected_sequences. Got:$got_sequences\n";
     }
+    return 1;
 }
 
 
@@ -211,9 +220,10 @@ sub download {
         }
         else {
             print "ID $id\tDownloading to file $filename\n";
-            $self->_download_from_genbank($filename, FASTA, $id);
-            system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
-            push(@filenames, $filename_gz);
+            if ($self->_download_from_genbank($filename, FASTA, $id)) {
+                system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
+                push(@filenames, $filename_gz);
+            }
         }
     }
     return \@filenames;
