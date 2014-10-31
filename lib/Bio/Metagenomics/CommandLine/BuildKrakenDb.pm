@@ -18,6 +18,10 @@ use Bio::Metagenomics::External::Kraken;
 has 'args'               => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name'        => ( is => 'ro', isa => 'Str', required => 1 );
 has 'database'           => ( is => 'rw', isa => 'Str' );
+has 'downloaded'         => ( is => 'rw', isa => 'Str' );
+has 'csv_to_add'         => ( is => 'rw', isa => 'Str' );
+has 'csv_to_add_out'     => ( is => 'rw', isa => 'Str' );
+has 'dbs_to_download'    => ( is => 'rw', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']});
 has 'ids_file'           => ( is => 'rw', isa => 'Str' );
 has 'ids_list'           => ( is => 'rw', isa => 'ArrayRef[Str]');
 has 'kraken_build_exec'  => ( is => 'rw', isa => 'Str', default => 'kraken-build' );
@@ -31,6 +35,10 @@ sub BUILD {
     my ($self) = @_;
     my (
         $help,
+        $csv_to_add,
+        $csv_to_add_out,
+        @dbs_to_download,
+        $downloaded,
         $ids_file,
         @ids_list,
         $kraken_build_exec,
@@ -43,10 +51,14 @@ sub BUILD {
     my $options_ok = GetOptionsFromArray(
         $self->args,
         'h|help' => \$help,
+        'c|csv_to_add=s' => \$csv_to_add,
+        'csv_to_add_out=s' => \$csv_to_add_out,
+        'd|dbs_to_download=s' => \@dbs_to_download,
+        'downloaded=s' => \$downloaded,
         'ids_file=s' => \$ids_file,
         'a|add_id=s' => \@ids_list,
         'n|noclean' => \$noclean,
-        'kraken_build' => \$kraken_build_exec,
+        'kraken_build=s' => \$kraken_build_exec,
         'max_db_size=i' => \$max_db_size,
         'minimizer_len=i' => \$minimizer_len,
         't|threads=i' => \$threads,
@@ -56,7 +68,19 @@ sub BUILD {
         $self->usage_text;
     }
 
+    $self->csv_to_add($csv_to_add) if defined $csv_to_add;
+    $self->csv_to_add_out($csv_to_add_out) if defined $csv_to_add_out;
     $self->database($self->args->[0]);
+    $self->downloaded($downloaded) if defined $downloaded;
+    if (scalar @dbs_to_download) {
+        if ($dbs_to_download[0] eq "NONE") {
+            my @empty = ();
+            $self->dbs_to_download(\@empty);
+        }
+        else {    
+            $self->dbs_to_download(\@dbs_to_download) if scalar(@dbs_to_download);
+        }
+    }
     $self->ids_file($ids_file) if defined($ids_file);
     $self->ids_list(\@ids_list) if scalar(@ids_list);
     $self->threads($threads) if defined($threads);
@@ -71,13 +95,17 @@ sub run {
     my ($self) = @_;
     my $kraken = Bio::Metagenomics::External::Kraken->new(
         clean => !($self->noclean),
+        csv_fasta_to_add => $self->csv_to_add,
+        csv_fasta_to_add_out => $self->csv_to_add_out,
         database => $self->database,
+        downloaded => $self->downloaded,
+        dbs_to_download => $self->dbs_to_download,
         ids_file => $self->ids_file,
         ids_list => $self->ids_list,
         kraken_build_exec => $self->kraken_build_exec,
         max_db_size => $self->max_db_size,
         minimizer_len => $self->minimizer_len,
-        threads => $self->threads,        
+        threads => $self->threads,
     );
     $kraken->build;
 }
@@ -92,13 +120,38 @@ Creates a new Kraken database in a new directory of the given name.
 
 Options:
 
--h,help
+-h, -help
     Show this help and exit
 
--a,add_id ID
+-c, -csv_to_add
+    Comma-separated file of genomes in FASTA files to add to the database.
+    Each genome is added as a child of a user-specified NCBI taxon ID.
+    File needs one line per genome with these three columns:
+        1. Absolute path to FASTA file, can be gizpped (with .gz extension)
+        2. Name of organism to appear in Kraken report file
+        3. NCBI taxon ID that will be the parent of this genome
+
+-csv_to_add_out
+    If -c is used, then write a new csv file that is the same
+    is the input csv, but with two new columns:
+        4. Taxon ID given to sample
+        5. GI number given to sample
+
+-d, -dbs_to_download
+    Kraken databases to download and add to the database. Must be one of:
+        bacteria, viruses, human.
+    This option can be used more than once if you want to
+    download more than one. Default is to use all three.
+    use -d NONE to not download any of these.
+
+-downloaded
+    Directory of gzipped FASTA files to use, that have already
+    been downloaded using the script metagm_genbank_downloader
+
+-a, -add_id ID
     Add genbank record with ID to the database.  ID can be a genbank ID or a
     GI number.  This option can be used more than once to add as many
-    genomes as you like.  See also -ids_file.
+    genomes as you like.  See also -ids_file and -downloaded
 
 -ids_file FILENAME
     Add IDs from file to the database.  Format is one line per ID.
@@ -113,11 +166,11 @@ Options:
 -minimizer_len INT
     Value used --minimizer-len when running kraken-build [" . $self->minimizer_len . "]
 
--n,-noclean
+-n, -noclean
     Do not clean up database afterwards. Default is to clean by running:
     kraken-build --clean
 
--t,-threads INT
+-t, -threads INT
     Number of threads [" . $self->threads . "]
 ";
 

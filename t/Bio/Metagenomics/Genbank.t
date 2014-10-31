@@ -35,4 +35,12 @@ is($obj->_filetype('t/data/genbank_get_output_filetype.fa'), Bio::Metagenomics::
 is($obj->_filetype('t/data/genbank_get_output_filetype.gb'), Bio::Metagenomics::Genbank::GENBANK, 'Detect GENBANK filetype OK');
 is($obj->_filetype('t/data/genbank_get_output_filetype.unknown'), Bio::Metagenomics::Genbank::UNKNOWN, 'Detect UNKNOWN filetype OK');
 
+is($obj->_fasta_to_number_of_sequences('t/data/genbank_fasta_to_number_of_sequences.42.fa'), 42, '_fasta_to_number_of_sequences() OK non-empty file');
+is($obj->_fasta_to_number_of_sequences('t/data/genbank_fasta_to_number_of_sequences.0.fa'), 0, '_fasta_to_number_of_sequences() OK empty file');
+
+@expected_ids = qw/CU329670.1 CU329671.1 CU329672.1 X54421.1/;
+my $got_ids = $obj->_assembly_report_to_genbank_ids('t/data/genbank_example_assembly_report.txt');
+is_deeply($got_ids, \@expected_ids, 'Get IDs from assembly report file OK');
+
+
 done_testing();

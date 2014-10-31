@@ -1,0 +1,28 @@
+# Assembly Name:  ASM294v2
+# Organism name:  Schizosaccharomyces pombe
+# Taxid:          4896
+# Submitter:      S. pombe European Sequencing Consortium (EUPOM)
+# Date:           2007-11-9
+# Assembly type:  haploid
+# Release type:   major
+# Assembly level: Chromosome with gaps
+# Genome representation: full
+# GenBank Assembly ID: GCA_000002945.2 (latest)
+# RefSeq Assembly ID: GCF_000002945.1 (species-representative latest)
+# RefSeq Assembly and GenBank Assemblies Identical: yes
+#
+## Assembly-Units:
+## GenBank Unit ID	RefSeq Unit ID	Assembly-Unit name
+## GCA_000001135.1	GCF_000001135.1	Primary Assembly
+## GCA_000189475.1	GCF_000189475.1	non-nuclear
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit
+I	assembled-molecule	I	Chromosome	CU329670.1	=	NC_003424.3	Primary Assembly
+II	assembled-molecule	II	Chromosome	CU329671.1	=	NC_003423.3	Primary Assembly
+III	assembled-molecule	III	Chromosome	CU329672.1	=	NC_003421.2	Primary Assembly
+MT	assembled-molecule	MT	Mitochondrion	X54421.1	=	NC_001326.1	non-nuclear

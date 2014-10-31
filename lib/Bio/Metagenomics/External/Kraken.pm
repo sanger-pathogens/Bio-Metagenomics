@@ -9,23 +9,158 @@ Wrapper for Kraken https://ccb.jhu.edu/software/kraken/
 =cut
 
 use Moose;
+use File::Spec;
 use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::Genbank;
 
-has 'clean'              => ( is => 'ro', isa => 'Bool', default => 1 );
-has 'database'           => ( is => 'ro', isa => 'Str', required => 1 );
-has 'ids_file'           => ( is => 'ro', isa => 'Maybe[Str]' );
-has 'ids_list'           => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
-has 'kraken_exec'        => ( is => 'ro', isa => 'Str', default => 'kraken' );
-has 'kraken_build_exec'  => ( is => 'ro', isa => 'Str', default => 'kraken-build' );
-has 'kraken_report_exec' => ( is => 'ro', isa => 'Str', default => 'kraken-report' );
-has 'max_db_size'        => ( is => 'ro', isa => 'Int', default => 4);
-has 'minimizer_len'      => ( is => 'ro', isa => 'Int', default => 13);
-has 'preload'            => ( is => 'ro', isa => 'Bool', default => 0 );
-has 'reads_1'            => ( is => 'ro', isa => 'Str');
-has 'reads_2'            => ( is => 'ro', isa => 'Maybe[Str]');
-has 'threads'            => ( is => 'ro', isa => 'Int', default => 1 );
-has 'tmp_file'           => ( is => 'ro', isa => 'Str');
+has 'clean'                => ( is => 'ro', isa => 'Bool', default => 1 );
+has 'database'             => ( is => 'ro', isa => 'Str', required => 1 );
+has 'downloaded'           => ( is => 'ro', isa => 'Maybe[Str]' );
+has 'dbs_to_download'      => ( is => 'ro', isa => 'ArrayRef[Str]', default => sub{['bacteria', 'viruses', 'human']} );
+has 'csv_fasta_to_add'     => ( is => 'ro', isa => 'Maybe[Str]');
+has 'fasta_to_add'         => ( is => 'ro', isa => 'Maybe[ArrayRef]', builder => '_build_fasta_to_add' );
+has 'csv_fasta_to_add_out' => ( is => 'ro', isa => 'Maybe[Str]');
+has 'gi_taxid_dmp_file'    => ( is => 'ro', isa => 'Str', builder => '_build_gi_taxid_dmp_file' );
+has 'ids_file'             => ( is => 'ro', isa => 'Maybe[Str]' );
+has 'ids_list'             => ( is => 'ro', isa => 'Maybe[ArrayRef[Str]]');
+has 'kraken_exec'          => ( is => 'ro', isa => 'Str', default => 'kraken' );
+has 'kraken_build_exec'    => ( is => 'ro', isa => 'Str', default => 'kraken-build' );
+has 'kraken_report_exec'   => ( is => 'ro', isa => 'Str', default => 'kraken-report' );
+has 'max_db_size'          => ( is => 'ro', isa => 'Int', default => 4);
+has 'minimizer_len'        => ( is => 'ro', isa => 'Int', default => 13);
+has 'preload'              => ( is => 'ro', isa => 'Bool', default => 0 );
+has 'reads_1'              => ( is => 'ro', isa => 'Str');
+has 'reads_2'              => ( is => 'ro', isa => 'Maybe[Str]');
+has 'names_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_names_dmp_file' );
+has 'nodes_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
+has 'threads'              => ( is => 'ro', isa => 'Int', default => 1 );
+has 'tmp_file'             => ( is => 'ro', isa => 'Str');
+
+
+sub _build_gi_taxid_dmp_file {
+    my ($self) = @_;
+    return File::Spec->catfile($self->database, 'taxonomy', 'gi_taxid_nucl.dmp');
+}
+
+
+sub _build_names_dmp_file {
+    my ($self) = @_;
+    return File::Spec->catfile($self->database, 'taxonomy', 'names.dmp');
+}
+
+
+sub _build_nodes_dmp_file {
+    my ($self) = @_;
+    return File::Spec->catfile($self->database, 'taxonomy', 'nodes.dmp');
+}
+
+
+sub _build_fasta_to_add {
+    my ($self) = @_;
+    return undef unless (defined $self->csv_fasta_to_add);
+    my @to_add;
+    open F, $self->csv_fasta_to_add or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->csv_fasta_to_add);
+    while (my $line = <F>) {
+        chomp $line;
+        my @fields = split(/,/, $line);
+        my %info = (
+            filename => $fields[0],
+            name => $fields[1],
+            parent_taxon_id => $fields[2],
+        );
+        push (@to_add, \%info);
+    }
+
+    close F or die $!;
+    return \@to_add;
+}
+
+
+sub _replace_fasta_headers {
+    my ($self, $infile, $outfile, $gi) = @_;
+    my $sequences = 1;
+    open FIN, $infile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $infile);
+    open FOUT, ">$outfile" or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $outfile);
+    while (my $line = <FIN>) {
+        if ($line =~ /^>/) {
+            $line = ">gi|$gi|$sequences\n";
+            $sequences++;
+        }
+        print FOUT $line;
+    }
+    close FIN or die $!;
+    close FOUT or die $!;
+}
+
+
+sub _add_fastas_to_db {
+    my ($self) = @_;
+    return unless defined $self->csv_fasta_to_add;
+    my $current_taxon = 2000000000;
+    my $current_gi = 4000000000;
+    my $csv_out;
+    if (defined $self->csv_fasta_to_add_out) {
+        open($csv_out, '>', $self->csv_fasta_to_add_out) or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->csv_fasta_to_add_out);
+    }
+
+
+
+    for my $h (@{$self->fasta_to_add}) {
+        my $gi = $current_gi++;
+        my $taxon = $current_taxon++;
+        my $tmpfile = "tmp.$$.add_to_kraken.fa";
+        $self->_replace_fasta_headers($h->{filename}, $tmpfile, $gi);
+        my $newline = "$taxon\t|\t" . $h->{name} . "\t|\t\t|\tscientific name\t|";
+        $self->_append_line_to_file($self->names_dmp_file, $newline);
+        $newline = join(
+            "\t|\t",
+            (
+                $taxon,
+                $h->{parent_taxon_id},
+                'no rank',
+                'HI',
+                '9',
+                '1',
+                '1',
+                '1',
+                '0',
+                '1',
+                '1',
+                '0',
+                '',
+            )
+        ) . "\t|";
+        $self->_append_line_to_file($self->nodes_dmp_file, $newline);
+        $self->_append_line_to_file($self->gi_taxid_dmp_file, "$gi\t$taxon");
+        my $command = $self->_add_to_library_command($tmpfile);
+        system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
+        unlink $tmpfile;
+        if  (defined $self->csv_fasta_to_add_out) {
+            print $csv_out join(
+                ',',
+                (
+                    $h->{filename},
+                    $h->{name},
+                    $h->{parent_taxon_id},
+                    $taxon,
+                    $gi
+                ),
+            ) . "\n";
+        }
+    }
+
+    if (defined $self->csv_fasta_to_add_out) {
+        close $csv_out or die $!;
+    }
+}
+
+
+sub _append_line_to_file {
+    my ($self, $filename, $to_add) = @_;
+    open F, ">>$filename" or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $filename);
+    print F "$to_add\n";
+    close F or die $!;
+}
 
 
 sub _download_taxonomy_command {
@@ -59,24 +194,34 @@ sub _download_domain_command {
 
 sub _add_to_library_command {
     my ($self, $filename) = @_;
-    return join(
+    my $gzipped = ($filename =~ /\.gz$/);
+    my $unzipped = "$filename.tmp";
+    my $cmd = join(
         ' ',
         (
             $self->kraken_build_exec,
-            '--add-to-library', $filename,
+            '--add-to-library', ($gzipped) ? $unzipped : $filename,
             '--db', $self->database,
         )
     );
+
+    if ($gzipped) {
+        return "gunzip -c $filename > $unzipped && $cmd && rm $unzipped";
+    }
+    else {
+        return $cmd;
+    }
 }
 
 
-sub _add_to_library {
+sub _add_to_library_from_ids {
     my ($self) = @_;
     return unless (defined($self->ids_file) or defined($self->ids_list));
 
     my $gb = Bio::Metagenomics::Genbank->new(
         ids_file => $self->ids_file,
         ids_list => $self->ids_list,
+        downloaded => $self->downloaded,
         output_dir => File::Spec->catfile($self->database, 'downloads'),
     );
     my $downloaded = $gb->download();
@@ -126,15 +271,14 @@ sub _run_commands {
 
 sub build {
     my ($self) = @_;
-    my @commands = (
-        $self->_download_taxonomy_command(),
-        $self->_download_domain_command('viruses'),
-        $self->_download_domain_command('bacteria'),
-        $self->_download_domain_command('human'),
-    );
+    my @commands = ($self->_download_taxonomy_command());
+    for my $domain (@{$self->dbs_to_download}){
+        push @commands, $self->_download_domain_command($domain);
+    }
     $self->_run_commands(\@commands);
 
-    $self->_add_to_library();
+    $self->_add_to_library_from_ids();
+    $self->_add_fastas_to_db();
 
     @commands = ($self->_build_command());
     if ($self->clean) {
@@ -161,7 +305,7 @@ sub _run_kraken_command {
     }
 
     if (defined($self->reads_2)) {
-        $cmd .= " --paired " . $self->reads_1 . " " . $self->reads_2;        
+        $cmd .= " --paired " . $self->reads_1 . " " . $self->reads_2;
     }
     else {
         $cmd .= " " . $self->reads_1;
