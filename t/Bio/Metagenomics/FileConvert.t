@@ -18,14 +18,29 @@ my $obj;
 my $outfile = 'FileConvertTest.out';
 
 ok($obj = Bio::Metagenomics::FileConvert->new(
-    infile => 't/data/FileConvert.kraken',
-    informat => 'kraken',
-    outfile => $outfile,
+    infile    => 't/data/FileConvert.kraken',
+    informat  => 'kraken',
+    outfile   => $outfile,
     outformat => 'metaphlan',
-), 'initialize object');
+), 'initialize object to convert kraken to metaphlan');
 
 
 $obj->convert();
 ok(compare('t/data/FileConvert.kraken_to_metaphlan', $outfile) == 0, 'Convert kraken to metaphlan');
+unlink $outfile;
+
+
+ok($obj = Bio::Metagenomics::FileConvert->new(
+    infile     => 't/data/FileConvert.fa_to_catted_fa.in.fa',
+    informat   => 'fasta',
+    outfile    => $outfile,
+    outformat  => 'catted_fasta',
+    spacing_Ns => 10,
+), 'initialize object to convert fasta to catted fasta');
+
+$obj->convert();
+ok(compare('t/data/FileConvert.fa_to_catted_fa.expected.fa', $outfile) == 0, 'Convert fasta to catted fasta');
+unlink $outfile;
+
 
 done_testing();

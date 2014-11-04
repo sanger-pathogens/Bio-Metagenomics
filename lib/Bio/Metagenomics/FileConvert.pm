@@ -14,10 +14,12 @@ use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::TaxonRank;
 
 has '_kraken_rank_letter_to_word' => ( is => 'ro', isa =>'HashRef', builder => '_build_kraken_rank_letter_to_word', init_arg => undef, lazy => 1 );
-has 'infile'    => ( is => 'ro', isa => 'Str', required => 1 );
-has 'informat'  => ( is => 'ro', isa => 'Str', required => 1 );
-has 'outfile'   => ( is => 'ro', isa => 'Str', required => 1 );
-has 'outformat' => ( is => 'ro', isa => 'Str', required => 1 );
+has 'infile'         => ( is => 'ro', isa => 'Str', required => 1 );
+has 'informat'       => ( is => 'ro', isa => 'Str', required => 1 );
+has 'outfile'        => ( is => 'ro', isa => 'Str', required => 1 );
+has 'outformat'      => ( is => 'ro', isa => 'Str', required => 1 );
+has 'spacing_Ns'     => ( is => 'ro', isa => 'Int', default => 20 );
+has 'fa_line_length' => ( is => 'ro', isa => 'Int', default => 60 );
 
 
 sub _build_kraken_rank_letter_to_word {
@@ -38,8 +40,12 @@ sub _build_kraken_rank_letter_to_word {
 
 sub BUILD {
     my ($self) = @_;
-    unless ($self->informat eq "kraken" and $self->outformat eq "metaphlan") {
-        Bio::Metagenomics::Exceptions::FileConvertTypes->throw(error => "informat:" . $self->informat . ". Outformat:" . $self->outformat);
+    my %allowed_formats = (
+        kraken => {metaphlan => 1},
+        fasta  => {catted_fasta => 1}
+    );
+    unless (exists $allowed_formats{$self->informat}{$self->outformat}) {
+        Bio::Metagenomics::Exceptions::FileConvertTypes->throw(error => "Cannot convert specified file types. informat:" . $self->informat . ". Outformat:" . $self->outformat);
     }
 }
 
@@ -48,6 +54,9 @@ sub convert {
     my ($self) = @_;
     if ($self->informat eq "kraken" and $self->outformat eq "metaphlan") {
         $self->_kraken_report_to_metaphlan();
+    }
+    elsif ($self->informat eq "fasta" and $self->outformat eq "catted_fasta") {
+        $self->_fasta_to_catted_fasta();
     }
     else {
         Bio::Metagenomics::Exceptions::FileConvertTypes->throw(error => "informat:" . $self->informat . ". Outformat:" . $self->outformat);
@@ -101,6 +110,44 @@ sub _kraken_report_to_metaphlan {
     close FIN or die $!;
 }
 
+
+sub _fasta_to_catted_fasta {
+    my ($self) = @_;
+    my $open = ($self->infile =~ /\.gz$/) ? "gunzip -c " . $self->infile ."|" : $self->infile;
+    open FIN, $open or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->infile);
+    $open = ($self->outfile =~ /\.gz$/) ? "| gzip -c > " . $self->outfile : ">" . $self->outfile;
+    open FOUT, $open or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->outfile);
+    my $line = <FIN>;
+    print FOUT $line;
+    my $seq = '';
+
+    while ($line = <FIN>) {
+        if ($line =~ /^>/ and length($seq)) {
+            $seq .= "N" x $self->spacing_Ns;
+        }
+        else {
+            chomp $line;
+            $seq .= $line;
+        }
+
+        while (length($seq) >= $self->fa_line_length) {
+            print FOUT substr($seq, 0, $self->fa_line_length), "\n";
+            substr($seq, 0, $self->fa_line_length) = '';
+        }
+    }
+
+    while (length($seq) >= $self->fa_line_length) {
+        print FOUT substr($seq, 0, $self->fa_line_length), "\n";
+        substr($seq, 0, $self->fa_line_length) = '';
+    }
+   
+    if (length($seq)) {
+        print FOUT "$seq\n";
+    }
+
+    close FIN or die $!;
+    close FOUT or die $!;
+}
 
 __PACKAGE__->meta->make_immutable;
 no Moose;
