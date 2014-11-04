@@ -233,7 +233,7 @@ sub download {
                         spacing_Ns => $self->cat_Ns,
                     );
                     $obj->convert();
-                    #unlink $filename;
+                    unlink $filename;
                 }
                 else {
                     system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
