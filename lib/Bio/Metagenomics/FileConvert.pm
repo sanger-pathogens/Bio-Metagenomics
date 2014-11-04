@@ -115,7 +115,7 @@ sub _fasta_to_catted_fasta {
     my ($self) = @_;
     my $open = ($self->infile =~ /\.gz$/) ? "gunzip -c " . $self->infile ."|" : $self->infile;
     open FIN, $open or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->infile);
-    $open = ($self->outfile =~ /\.gz$/) ? "| gzip -c > " . $self->outfile : ">" . $self->outfile;
+    $open = ($self->outfile =~ /\.gz$/) ? "| gzip -9 -c > " . $self->outfile : ">" . $self->outfile;
     open FOUT, $open or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $self->outfile);
     my $line = <FIN>;
     print FOUT $line;
