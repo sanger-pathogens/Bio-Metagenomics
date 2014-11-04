@@ -122,8 +122,10 @@ sub _fasta_to_catted_fasta {
     my $seq = '';
 
     while ($line = <FIN>) {
-        if ($line =~ /^>/ and length($seq)) {
-            $seq .= "N" x $self->spacing_Ns;
+        if ($line =~ /^>/) {
+            if (length($seq)) {
+                $seq .= "N" x $self->spacing_Ns;
+            }
         }
         else {
             chomp $line;
