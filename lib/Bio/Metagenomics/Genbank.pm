@@ -11,6 +11,7 @@ Download genbank records using GI or Genbank IDs
 use Moose;
 use LWP::Simple;
 use Bio::Metagenomics::Exceptions;
+use Bio::Metagenomics::FileConvert;
 use File::Spec;
 use File::Path;
 
@@ -21,6 +22,8 @@ use constant {
 };
 
 
+has 'cat_fastas' => ( is => 'ro', isa => 'Bool', default => 0 );
+has 'cat_Ns'     => ( is => 'ro', isa => 'Int', default => 20 );
 has 'delay'      => ( is => 'ro', isa => 'Int', default => 3 );
 has 'downloaded' => ( is => 'rw', isa => 'Maybe[Str]' );
 has 'ids_file'   => ( is => 'ro', isa => 'Maybe[Str]' );
@@ -221,7 +224,20 @@ sub download {
         else {
             print "ID $id\tDownloading to file $filename\n";
             if ($self->_download_from_genbank($filename, FASTA, $id)) {
-                system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
+                if ($self->cat_fastas) {
+                    my $obj =  Bio::Metagenomics::FileConvert->new(
+                        infile     => $filename,
+                        informat   => 'fasta',
+                        outfile    => $filename_gz,
+                        outformat  => 'catted_fasta',
+                        spacing_Ns => $self->cat_Ns,
+                    );
+                    $obj->convert();
+                    unlink $filename;
+                }
+                else {
+                    system("gzip -9 $filename") and die "Error running: gzip -9 $filename";
+                }
                 push(@filenames, $filename_gz);
             }
         }
