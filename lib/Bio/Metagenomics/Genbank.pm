@@ -168,7 +168,7 @@ sub _download_from_genbank {
         print "ID $id\t... looks like an assembly ID. Getting assembly report file\n";
         my $assembly_report = "$outfile.tmp.assembly_report";
         $self->_download_assembly_report($id, $assembly_report);
-        my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report);
+        my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report, $id);
         unlink $assembly_report;
         if (scalar @{$all_ids} == 0) {
             print "ID $id\tWARNING: no sequences found in assembly report file. Skipping\n";
@@ -208,13 +208,18 @@ sub _download_assembly_report {
 
 
 sub _assembly_report_to_genbank_ids {
-    my ($self, $report_file) = @_;
+    my ($self, $report_file, $id) = @_;
     open F, $report_file or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $report_file);
     my @ids;
     while (my $line = <F>) {
         next if $line =~ /^#/;
         my @fields = split(/\t/, $line);
-        push(@ids, $fields[4]);
+        if ($fields[4] eq "na") {
+            print "ID $id\t\tWARNING: skipping ID 'na' found in report file\n";
+        }
+        else {
+            push(@ids, $fields[4]);
+        }
     }
     close F or die $!;
     return \@ids;
