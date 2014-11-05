@@ -89,7 +89,7 @@ sub _fasta_is_ok {
     while (my $line = <F>) {
         next if ($line =~ /^>/);
         chomp $line;
-        if ($line =~ /[^acgtn]/i) {
+        if ($line =~ /[^acgtnryswkmbdhv]/i) {
             close F or die $!; 
             return 0;
         }
