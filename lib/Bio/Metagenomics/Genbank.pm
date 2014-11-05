@@ -103,18 +103,19 @@ sub _fasta_is_ok {
 sub _get_with_getstore {
     my ($self, $outfile, $filetype, $id) = @_;
     foreach my $i (1..$self->max_tries) {
-        print "\tgetstore(" . $self->_download_record_url($filetype, $id) . ", $outfile);\n";
+        print "\tgetstore('" . $self->_download_record_url($filetype, $id) . "', '$outfile');\n";
         getstore($self->_download_record_url($filetype, $id), $outfile);
         if (-e $outfile and $self->_filetype($outfile) == $filetype) {
             # There is an empty line at the end of each FASTA record
             # in the file. Remove all empty lines.
             system("sed -i '/^\$/d' $outfile") and die $!;
-            return;
+            # Sometimes 404 error messages get put into the output file.
+            # So for FASTA files check that it looks like a fasta file throughout
+            return if ( $filetype != FASTA or ($filetype == FASTA and $self->_fasta_is_ok($outfile)) );
         }
-        else {
-            unlink $outfile if -e $outfile;
-            sleep($self->delay);
-        }
+
+        unlink $outfile if -e $outfile;
+        sleep($self->delay);
     }
     Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error downloading $id from genbank. Cannot continue");
 }
