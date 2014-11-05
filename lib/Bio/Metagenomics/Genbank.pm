@@ -82,21 +82,40 @@ sub _filetype {
 }
 
 
+sub _fasta_is_ok {
+    my ($slef, $filename) = @_;
+    open F, $filename or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file $filename");
+
+    while (my $line = <F>) {
+        next if ($line =~ /^>/);
+        chomp $line;
+        if ($line =~ /[^acgtn]/i) {
+            close F or die $!; 
+            return 0;
+        }
+    }
+
+    close F or die $!; 
+    return 1;
+}
+
+
 sub _get_with_getstore {
     my ($self, $outfile, $filetype, $id) = @_;
     foreach my $i (1..$self->max_tries) {
-        print "\tgetstore(" . $self->_download_record_url($filetype, $id) . ", $outfile);\n";
+        print "\tgetstore('" . $self->_download_record_url($filetype, $id) . "', '$outfile');\n";
         getstore($self->_download_record_url($filetype, $id), $outfile);
         if (-e $outfile and $self->_filetype($outfile) == $filetype) {
             # There is an empty line at the end of each FASTA record
             # in the file. Remove all empty lines.
             system("sed -i '/^\$/d' $outfile") and die $!;
-            return;
+            # Sometimes 404 error messages get put into the output file.
+            # So for FASTA files check that it looks like a fasta file throughout
+            return if ( $filetype != FASTA or ($filetype == FASTA and $self->_fasta_is_ok($outfile)) );
         }
-        else {
-            unlink $outfile if -e $outfile;
-            sleep($self->delay);
-        }
+
+        unlink $outfile if -e $outfile;
+        sleep($self->delay);
     }
     Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error downloading $id from genbank. Cannot continue");
 }
@@ -149,7 +168,7 @@ sub _download_from_genbank {
         print "ID $id\t... looks like an assembly ID. Getting assembly report file\n";
         my $assembly_report = "$outfile.tmp.assembly_report";
         $self->_download_assembly_report($id, $assembly_report);
-        my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report);
+        my $all_ids = $self->_assembly_report_to_genbank_ids($assembly_report, $id);
         unlink $assembly_report;
         if (scalar @{$all_ids} == 0) {
             print "ID $id\tWARNING: no sequences found in assembly report file. Skipping\n";
@@ -189,13 +208,18 @@ sub _download_assembly_report {
 
 
 sub _assembly_report_to_genbank_ids {
-    my ($self, $report_file) = @_;
+    my ($self, $report_file, $id) = @_;
     open F, $report_file or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $report_file);
     my @ids;
     while (my $line = <F>) {
         next if $line =~ /^#/;
         my @fields = split(/\t/, $line);
-        push(@ids, $fields[4]);
+        if ($fields[4] eq "na") {
+            print "ID $id\t\tWARNING: skipping ID 'na' found in report file\n";
+        }
+        else {
+            push(@ids, $fields[4]);
+        }
     }
     close F or die $!;
     return \@ids;
