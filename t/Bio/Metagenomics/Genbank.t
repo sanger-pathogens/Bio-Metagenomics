@@ -42,5 +42,8 @@ is($obj->_fasta_to_number_of_sequences('t/data/genbank_fasta_to_number_of_sequen
 my $got_ids = $obj->_assembly_report_to_genbank_ids('t/data/genbank_example_assembly_report.txt');
 is_deeply($got_ids, \@expected_ids, 'Get IDs from assembly report file OK');
 
+is($obj->_fasta_is_ok('t/data/genbank_fasta_is_ok.ok.fa'), 1, '_fasta_is_ok on OK file');
+is($obj->_fasta_is_ok('t/data/genbank_fasta_is_ok.not_ok.fa'), 0, '_fasta_is_ok on bad file');
+
 
 done_testing();

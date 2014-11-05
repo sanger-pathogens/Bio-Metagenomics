@@ -82,6 +82,24 @@ sub _filetype {
 }
 
 
+sub _fasta_is_ok {
+    my ($slef, $filename) = @_;
+    open F, $filename or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file $filename");
+
+    while (my $line = <F>) {
+        next if ($line =~ /^>/);
+        chomp $line;
+        if ($line =~ /[^acgtn]/i) {
+            close F or die $!; 
+            return 0;
+        }
+    }
+
+    close F or die $!; 
+    return 1;
+}
+
+
 sub _get_with_getstore {
     my ($self, $outfile, $filetype, $id) = @_;
     foreach my $i (1..$self->max_tries) {
