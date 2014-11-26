@@ -34,7 +34,7 @@ has 'reads_2'              => ( is => 'ro', isa => 'Maybe[Str]');
 has 'names_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_names_dmp_file' );
 has 'nodes_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
 has 'threads'              => ( is => 'ro', isa => 'Int', default => 1 );
-has 'tmp_file'             => ( is => 'ro', isa => 'Str');
+has 'tmp_file'             => ( is => 'ro', isa => 'Maybe[Str]');
 
 
 sub _build_gi_taxid_dmp_file {
