@@ -12,6 +12,8 @@ use Moose;
 use File::Spec;
 use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::Genbank;
+use File::Basename;
+use Cwd 'abs_path';
 
 has 'clean'                => ( is => 'ro', isa => 'Bool', default => 1 );
 has 'database'             => ( is => 'ro', isa => 'Str', required => 1 );
@@ -29,8 +31,8 @@ has 'kraken_report_exec'   => ( is => 'ro', isa => 'Str', default => 'kraken-rep
 has 'max_db_size'          => ( is => 'ro', isa => 'Int', default => 4);
 has 'minimizer_len'        => ( is => 'ro', isa => 'Int', default => 13);
 has 'preload'              => ( is => 'ro', isa => 'Bool', default => 0 );
-has 'reads_1'              => ( is => 'ro', isa => 'Str');
-has 'reads_2'              => ( is => 'ro', isa => 'Maybe[Str]');
+has 'reads_1'              => ( is => 'rw', isa => 'Str');
+has 'reads_2'              => ( is => 'rw', isa => 'Maybe[Str]');
 has 'names_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_names_dmp_file' );
 has 'nodes_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
 has 'threads'              => ( is => 'ro', isa => 'Int', default => 1 );
@@ -264,6 +266,7 @@ sub _clean_command {
 sub _run_commands {
     my ($self, $commands) = @_;
     foreach my $command (@{$commands}) {
+        next unless( defined($command));
         system($command) and Bio::Metagenomics::Exceptions::SystemCallError->throw(error => "Command: $command");
     }
 }
@@ -287,6 +290,63 @@ sub build {
     $self->_run_commands(\@commands);
 }
 
+sub _fix_fastq_headers_command
+{
+  my ($self) = @_;
+  my $read_1_first_name = $self->_get_first_read_name($self->reads_1);
+  my $rename_reads;
+  my $cmd ;
+  if($read_1_first_name =~ /^@([^\s]+)\/([12])/)
+  {
+    my $read_name = $1;
+    my $read_direction = $2;
+    if (defined($self->reads_2)) {
+      my $read_2_first_name = $self->_get_first_read_name($self->reads_2);
+      my $expected_read_direction = ($read_direction % 2) + 1;
+      if($read_2_first_name =~ /^@($read_name)\/$read_direction/)
+      {
+      }
+      else
+      {
+        $rename_reads = 1;
+      }
+    }
+  }
+  else
+  {
+    $rename_reads = 1;
+  }
+  
+  if($rename_reads == 1)
+  {
+  
+    my($filename, $dirs, $suffix) = fileparse($self->reads_1);
+    my $output_filename_1 = $dirs.'.renamed.'.$filename;
+    $cmd = "fastaq_enumerate_names --suffix /1 ".$self->reads_1." " .$output_filename_1;
+    $self->reads_1($output_filename_1);
+    
+    if (defined($self->reads_2)) {
+      ($filename, $dirs, $suffix) = fileparse($self->reads_2);
+      my $output_filename_2 = $dirs.'.renamed.'.$filename;
+      $cmd .=  " && fastaq_enumerate_names --suffix /2 ".$self->reads_2." " .$output_filename_2;
+      $self->reads_2($output_filename_2);
+    }
+  }
+  return  $cmd;
+}
+
+sub _get_first_read_name
+{
+  my ($self, $file) = @_;
+  my $open_command = 'head ';
+  if($file =~ /gz$/)
+  {
+    $open_command = 'gunzip -c ';
+  }
+  open(my $read_fh ,"-|",  $open_command.$file);
+  my $read_first_name = <$read_fh>;
+  return $read_first_name;
+}
 
 sub _run_kraken_command {
     my ($self, $outfile) = @_;
@@ -333,6 +393,7 @@ sub run_kraken {
     my ($self, $outfile) = @_;
     my $tmp_out = defined $self->tmp_file ? $self->tmp_file : "$outfile.kraken_out";
     my @commands = (
+        $self->_fix_fastq_headers_command(),
         $self->_run_kraken_command($tmp_out),
         $self->_kraken_report_command($tmp_out, $outfile)
     );
