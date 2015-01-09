@@ -25,7 +25,7 @@ ok($obj = Bio::Metagenomics::External::Kraken->new(
     reads_2 => 't/data/non_standard_read_names_2.fastq',
     
 ), 'initialize object where fastqs have non standard and mismatching names');
-is($obj->_fix_fastq_headers_command(), 'fastaq_enumerate_names --suffix /1 t/data/non_standard_read_names_1.fastq t/data/.renamed.non_standard_read_names_1.fastq && fastaq_enumerate_names --suffix /2 t/data/non_standard_read_names_2.fastq t/data/.renamed.non_standard_read_names_2.fastq','Relabel sequences in fastq');
+is($obj->_fix_fastq_headers_command(), 'fastaq enumerate_names --suffix /1 t/data/non_standard_read_names_1.fastq t/data/.renamed.non_standard_read_names_1.fastq && fastaq enumerate_names --suffix /2 t/data/non_standard_read_names_2.fastq t/data/.renamed.non_standard_read_names_2.fastq','Relabel sequences in fastq');
 
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
@@ -33,7 +33,7 @@ ok($obj = Bio::Metagenomics::External::Kraken->new(
     reads_1 => 't/data/non_standard_read_names_1.fastq',
     
 ), 'initialize object where its single ended');
-is($obj->_fix_fastq_headers_command(), 'fastaq_enumerate_names --suffix /1 t/data/non_standard_read_names_1.fastq t/data/.renamed.non_standard_read_names_1.fastq','Relabel sequences in fa single ended');
+is($obj->_fix_fastq_headers_command(), 'fastaq enumerate_names --suffix /1 t/data/non_standard_read_names_1.fastq t/data/.renamed.non_standard_read_names_1.fastq','Relabel sequences in fa single ended');
 
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
@@ -42,7 +42,7 @@ ok($obj = Bio::Metagenomics::External::Kraken->new(
     reads_2 => 't/data/non_standard_read_names_2.fastq.gz',
     
 ), 'initialize object with non standard and mismatching names gzipped');
-is($obj->_fix_fastq_headers_command(), 'fastaq_enumerate_names --suffix /1 t/data/non_standard_read_names_1.fastq.gz t/data/.renamed.non_standard_read_names_1.fastq.gz && fastaq_enumerate_names --suffix /2 t/data/non_standard_read_names_2.fastq.gz t/data/.renamed.non_standard_read_names_2.fastq.gz','Relabel sequences in fastq thats been gzipped');
+is($obj->_fix_fastq_headers_command(), 'fastaq enumerate_names --suffix /1 t/data/non_standard_read_names_1.fastq.gz t/data/.renamed.non_standard_read_names_1.fastq.gz && fastaq enumerate_names --suffix /2 t/data/non_standard_read_names_2.fastq.gz t/data/.renamed.non_standard_read_names_2.fastq.gz','Relabel sequences in fastq thats been gzipped');
 
 
 ok($obj = Bio::Metagenomics::External::Kraken->new(
