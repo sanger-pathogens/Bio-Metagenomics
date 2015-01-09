@@ -322,13 +322,13 @@ sub _fix_fastq_headers_command
   
     my($filename, $dirs, $suffix) = fileparse($self->reads_1);
     my $output_filename_1 = $dirs.'.renamed.'.$filename;
-    $cmd = "fastaq_enumerate_names --suffix /1 ".$self->reads_1." " .$output_filename_1;
+    $cmd = "fastaq enumerate_names --suffix /1 ".$self->reads_1." " .$output_filename_1;
     $self->reads_1($output_filename_1);
     
     if (defined($self->reads_2)) {
       ($filename, $dirs, $suffix) = fileparse($self->reads_2);
       my $output_filename_2 = $dirs.'.renamed.'.$filename;
-      $cmd .=  " && fastaq_enumerate_names --suffix /2 ".$self->reads_2." " .$output_filename_2;
+      $cmd .=  " && fastaq enumerate_names --suffix /2 ".$self->reads_2." " .$output_filename_2;
       $self->reads_2($output_filename_2);
     }
   }
