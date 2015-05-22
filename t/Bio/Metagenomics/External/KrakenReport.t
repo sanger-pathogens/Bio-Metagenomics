@@ -151,5 +151,19 @@ ok($obj = Bio::Metagenomics::External::KrakenReport->new(
 
 is_deeply($obj->hits, \@expected);
 
+
+ok($obj = Bio::Metagenomics::External::KrakenReport->new(
+    filename => 't/data/KrakenReport.with_header.report'
+), 'initialise object for a report with a header');
+@expected = (
+          {
+            'clade_reads' => '40',
+            'node_reads' => 10,
+            'name' => 'Domain1',
+            'taxon' => 'D'
+          }
+);
+is_deeply($obj->hits, \@expected, 'results without the header');
+
 done_testing();
 
