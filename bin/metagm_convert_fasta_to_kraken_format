@@ -1,0 +1,20 @@
+#!/usr/bin/env perl
+
+package Bio::Metagenomics::Bin::MetagmConvertFastaToKrakenFormat;
+
+# ABSTRACT: Take in a FASTA file and convert it to a Kraken format
+
+# PODNAME: metagm_convert_fasta_to_kraken_format
+
+=head1 synopsis
+
+Take in a FASTA file and convert it to a Kraken format
+
+=cut
+
+BEGIN { unshift( @INC, '../lib' ) }
+BEGIN { unshift( @INC, './lib' ) }
+BEGIN { unshift( @INC, '/software/pathogen/internal/prod/lib/' ) }
+
+use Bio::Metagenomics::CommandLine::ConvertFastaToKrakenFormat;
+Bio::Metagenomics::CommandLine::ConvertFastaToKrakenFormat->new(args => \@ARGV, script_name => $0)->run;
