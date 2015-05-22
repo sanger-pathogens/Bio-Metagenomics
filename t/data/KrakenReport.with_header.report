@@ -1,0 +1,7 @@
+#Kraken version: 0.10.5-beta
+#Database used: /path/to/database
+ 42.00	10	10	U	0	unclassified
+ 43.00	90	90	-	1	root
+ 43.00	90	90	-	1	  spam
+ 44.00	40	10	D	2	    Domain1
+ 

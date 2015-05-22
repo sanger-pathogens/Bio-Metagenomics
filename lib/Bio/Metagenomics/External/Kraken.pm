@@ -382,6 +382,7 @@ sub _kraken_report_command {
         (
             $self->kraken_report_exec,
             '--db', $self->database,
+            '--print_header',
             $infile,
             '>', $outfile,
         )

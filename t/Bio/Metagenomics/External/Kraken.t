@@ -64,7 +64,7 @@ is($obj->_add_to_library_command('filename.gz'), "gunzip -c filename.gz > filena
 is($obj->_build_command(), "kraken-build --build --db $db --threads 42 --max-db-size 2 --minimizer-len 11", 'Construct build command');
 is($obj->_clean_command(), "kraken-build --clean --db $db", 'Construct clean command');
 is($obj->_run_kraken_command('out'), "kraken --db $db --threads 42 --output out reads_1.fastq", 'Construct kraken command');
-is($obj->_kraken_report_command('in', 'out'), "kraken-report --db $db in > out", 'Construct kraken report command');
+is($obj->_kraken_report_command('in', 'out'), "kraken-report --db $db --print_header in > out", 'Construct kraken report command');
 
 my @expected_fasta_to_add = (
     {

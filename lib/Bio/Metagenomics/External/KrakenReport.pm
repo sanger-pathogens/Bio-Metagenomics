@@ -47,6 +47,7 @@ sub _load_info_from_file {
 
     open F, $self->filename or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "filename: '" . $self->filename . "'" );
     while (my $line = <F>) {
+        next if($line =~ /^\#/ || $line =~ /^\s*$/);
         my ($clade_reads, $node_reads, $taxon_letter, $name, $indent_level) = _parse_report_line($line);
         $self->total_reads($self->total_reads + $node_reads);
         if (!defined $taxons{$taxon_letter}) {
