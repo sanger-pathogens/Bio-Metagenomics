@@ -24,12 +24,12 @@ sub BUILD {
     my ( $help, $taxon, $input_filename, $output_filename );
     my $options_ok = GetOptionsFromArray(
         $self->args,
-        't|taxon=i'           => \$taxon,
-        'o|output_filename=s' => \$output_filename,
+        't|taxon:i'           => \$taxon,
+        'o|output_filename:s' => \$output_filename,
         'h|help'              => \$help,
     );
 
-    if ( !($options_ok) or scalar( @{ $self->args } ) != 1 or $help or ( -e $self->args->[0] ) ) {
+    if ( !($options_ok) or scalar( @{ $self->args } ) != 1 or $help or (! -e $self->args->[0] ) ) {
         $self->usage_text;
     }
 
