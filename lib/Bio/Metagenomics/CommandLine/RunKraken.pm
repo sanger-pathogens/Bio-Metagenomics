@@ -45,8 +45,8 @@ sub BUILD {
         $self->args,
         'h|help' => \$help,
         'n|noclean' => \$noclean,
-        'kraken_exec' => \$kraken_exec,
-        'kraken_report' => \$kraken_report_exec,
+        'kraken_exec=s' => \$kraken_exec,
+        'kraken_report=s' => \$kraken_report_exec,
         'preload' => \$preload,
         't|threads=i' => \$threads,
         'u|tmp_file=s' => \$tmp_file,
@@ -102,7 +102,7 @@ Options:
 -h,help
     Show this help and exit
 
--kraken FILENAME
+-kraken_exec FILENAME
     kraken executable [" . $self->kraken_exec . "]
 
 -kraken_report FILENAME
