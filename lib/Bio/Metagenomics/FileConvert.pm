@@ -25,6 +25,7 @@ has 'fa_line_length' => ( is => 'ro', isa => 'Int', default => 60 );
 sub _build_kraken_rank_letter_to_word {
     my %h = (
         'D' => 'domain',
+        'K' => 'kingdom',
         'P' => 'phylum',
         'C' => 'class',
         'O' => 'order',
@@ -100,7 +101,12 @@ sub _kraken_report_to_metaphlan {
 
     while ($line = <FIN>) {
         ($count, $rank, $name) = $self->_kraken_report_line_to_data($line);
-        next if ($rank eq 'unknown');
+        # Kraken's taxon levels are domain, kingdom, phylum, class, ... etc
+        # Metaphlan does not have domain. Instead, has kingdom, pyhlum, class, ... etc
+        # BUT, what Kraken calls a "domain" seems to be the same as Metaphlan's "kingdom".
+        # So, a domain in Kraken gets converted to a kingdom for Metaphlan, and we
+        # ignore anything that is called a kingdom by kraken.
+        next if ($rank eq 'unknown' or $rank eq 'kingdom');
         $taxon_rank->set_rank($rank, $name);
         $pc = sprintf "%.5f", 100 * $count / $total_reads;
         print FOUT $taxon_rank->to_metaphlan_string() . "\t$pc\n";
