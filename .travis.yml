@@ -1,0 +1,13 @@
+language: perl
+perl:
+  - "5.14"
+sudo: false
+install:
+  - "mkdir -p build && cd build"
+  - "mkdir fake_bin && cd fake_bin"
+  - "touch kraken kraken-build kraken-report merge_metaphlan_tables.py  metaphlan_hclust_heatmap.py"
+  - "chmod u+x $(ls) && export PATH=$(pwd):$PATH"
+  - "cd ../.. && cpanm Dist::Zilla"
+  - "dzil authordeps --missing | cpanm"
+  - "dzil listdeps --missing | cpanm"
+script: "dzil test"
