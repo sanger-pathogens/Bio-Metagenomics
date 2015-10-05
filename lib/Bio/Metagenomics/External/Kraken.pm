@@ -37,6 +37,7 @@ has 'names_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_nam
 has 'nodes_dmp_file'       => ( is => 'rw', isa => 'Str', builder => '_build_nodes_dmp_file' );
 has 'threads'              => ( is => 'ro', isa => 'Int', default => 1 );
 has 'tmp_file'             => ( is => 'ro', isa => 'Maybe[Str]');
+has 'fix_fastq_headers'    => ( is => 'ro', isa => 'Bool', default => 1);
 
 
 sub _build_gi_taxid_dmp_file {
@@ -312,7 +313,7 @@ sub _fix_fastq_headers_command
       }
     }
   }
-  else
+  else  
   {
     $rename_reads = 1;
   }
@@ -393,11 +394,11 @@ sub _kraken_report_command {
 sub run_kraken {
     my ($self, $outfile) = @_;
     my $tmp_out = defined $self->tmp_file ? $self->tmp_file : "$outfile.kraken_out";
-    my @commands = (
-        $self->_fix_fastq_headers_command(),
-        $self->_run_kraken_command($tmp_out),
-        $self->_kraken_report_command($tmp_out, $outfile)
-    );
+    my @commands;
+    push(@commands, $self->_fix_fastq_headers_command()) if($self->fix_fastq_headers == 1);
+    push(@commands, $self->_run_kraken_command($tmp_out));
+    push(@commands, $self->_kraken_report_command($tmp_out, $outfile));
+    
     $self->_run_commands(\@commands);
     if ($self->clean) {
         unlink $tmp_out;
