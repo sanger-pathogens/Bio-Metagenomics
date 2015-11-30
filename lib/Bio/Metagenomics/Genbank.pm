@@ -151,7 +151,16 @@ sub _download_chunks_from_genbank {
 
 sub _fasta_to_number_of_sequences {
     my ($self, $infile) = @_;
-    open F, $infile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $infile);
+    my $problem_reading_fasta = 0;
+    open F, $infile or $problem_reading_fasta = 1;
+    if $problem_reading_fasta {
+        if ( -e $infile ) {
+            print "WARNING: There was a problem reading the fasta '$infile'; it doesn't exist. Skipping\n";
+        } else {
+            print "WARNING: There was an unknown issue reading the fasta '$infile'. Skipping\n";
+        }
+        return 0;
+    }
     my $sequences = 0;
     while (<F>) {
         $sequences++ if /^>/;
@@ -165,7 +174,6 @@ sub _download_from_genbank {
     my ($self, $outfile, $filetype, $id) = @_;
     my $original_id = $id;
     my $expected_sequences;
-    my $download_success;
 
     # If it's an assembly ID, then we need to get the sequence record ID
     # of each sequence of the assembly. This is in the assembly report file
