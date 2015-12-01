@@ -72,8 +72,16 @@ sub BUILD {
     $self->csv_to_add_out($csv_to_add_out) if defined $csv_to_add_out;
     $self->database($self->args->[0]);
     $self->downloaded($downloaded) if defined $downloaded;
+    if ($downloaded and not ($ids_file or @ids_list)) {
+        print "ERROR: You must set at least one -ids_file or -add_id if setting -downloaded\n";
+        $self->usage_text;
+    }
     if (scalar @dbs_to_download) {
         if ($dbs_to_download[0] eq "NONE") {
+            if ( not ($csv_to_add or $ids_file or @ids_list) ) {
+                print "ERROR: You must provide at least one of -csv_to_add, -add_id or -ids_file or set -dbs_to_download to something other than NONE\n";
+                $self->usage_text;
+            }
             my @empty = ();
             $self->dbs_to_download(\@empty);
         }
@@ -145,8 +153,9 @@ Options:
     use -d NONE to not download any of these.
 
 -downloaded
-    Directory of gzipped FASTA files to use, that have already
-    been downloaded using the script metagm_genbank_downloader
+    Directory of gzipped FASTA files to use, that have already been
+    downloaded using the script metagm_genbank_downloader. If you use
+    this option, you must use at least one of -add_id or -ids_file.
 
 -a, -add_id ID
     Add genbank record with ID to the database.  ID can be a genbank ID or a
@@ -172,6 +181,9 @@ Options:
 
 -t, -threads INT
     Number of threads [" . $self->threads . "]
+
+WARNING: You must use at least one of -csv_to_add, -add_id or -ids_file or
+set -dbs_to_download to something other than 'NONE'.
 ";
 
     exit(1);
