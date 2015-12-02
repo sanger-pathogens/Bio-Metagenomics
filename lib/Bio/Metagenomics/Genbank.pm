@@ -140,7 +140,7 @@ sub _download_chunks_from_genbank {
     for my $ids (@{$chunks}) {
         my $tmpfile = "$outfile.$$.tmp";
         my $download_success = $self->_get_with_getstore($tmpfile, FASTA, $ids);
-        if $download_success {
+        if ($download_success) {
             my $cmd = "cat $tmpfile >> $outfile";
             system($cmd) and die "Error running:\n$cmd\n";
             unlink $tmpfile;
@@ -153,7 +153,7 @@ sub _fasta_to_number_of_sequences {
     my ($self, $infile) = @_;
     my $problem_reading_fasta = 0;
     open F, $infile or $problem_reading_fasta = 1;
-    if $problem_reading_fasta {
+    if ($problem_reading_fasta) {
         if ( -e $infile ) {
             print "WARNING: There was a problem reading the fasta '$infile'; it doesn't exist. Skipping\n";
         } else {
