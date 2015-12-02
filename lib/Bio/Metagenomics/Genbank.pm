@@ -102,22 +102,24 @@ sub _fasta_is_ok {
 
 sub _get_with_getstore {
     my ($self, $outfile, $filetype, $id) = @_;
+    my $download_url = $self->_download_record_url($filetype, $id);
     foreach my $i (1..$self->max_tries) {
-        print "\tgetstore('" . $self->_download_record_url($filetype, $id) . "', '$outfile');\n";
-        getstore($self->_download_record_url($filetype, $id), $outfile);
+        print "\tgetstore('" . $download_url . "', '$outfile');\n";
+        getstore($download_url, $outfile);
         if (-e $outfile and $self->_filetype($outfile) == $filetype) {
             # There is an empty line at the end of each FASTA record
             # in the file. Remove all empty lines.
             system("sed -i '/^\$/d' $outfile") and die $!;
             # Sometimes 404 error messages get put into the output file.
             # So for FASTA files check that it looks like a fasta file throughout
-            return if ( $filetype != FASTA or ($filetype == FASTA and $self->_fasta_is_ok($outfile)) );
+            return 1 if ( $filetype != FASTA or ($filetype == FASTA and $self->_fasta_is_ok($outfile)) );
         }
 
         unlink $outfile if -e $outfile;
         sleep($self->delay);
     }
-    Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error downloading $id from genbank. Cannot continue");
+    print "ID $id\tWARNING: Could not download $id from '$download_url'. Skipping\n";
+    return 0;
 }
 
 
@@ -137,17 +139,28 @@ sub _download_chunks_from_genbank {
     my ($self, $chunks, $outfile) = @_;
     for my $ids (@{$chunks}) {
         my $tmpfile = "$outfile.$$.tmp";
-        $self->_get_with_getstore($tmpfile, FASTA, $ids);
-        my $cmd = "cat $tmpfile >> $outfile";
-        system($cmd) and die "Error running:\n$cmd\n";
-        unlink $tmpfile;
+        my $download_success = $self->_get_with_getstore($tmpfile, FASTA, $ids);
+        if $download_success {
+            my $cmd = "cat $tmpfile >> $outfile";
+            system($cmd) and die "Error running:\n$cmd\n";
+            unlink $tmpfile;
+        }
     }
 }
 
 
 sub _fasta_to_number_of_sequences {
     my ($self, $infile) = @_;
-    open F, $infile or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file " . $infile);
+    my $problem_reading_fasta = 0;
+    open F, $infile or $problem_reading_fasta = 1;
+    if $problem_reading_fasta {
+        if ( -e $infile ) {
+            print "WARNING: There was a problem reading the fasta '$infile'; it doesn't exist. Skipping\n";
+        } else {
+            print "WARNING: There was an unknown issue reading the fasta '$infile'. Skipping\n";
+        }
+        return 0;
+    }
     my $sequences = 0;
     while (<F>) {
         $sequences++ if /^>/;

@@ -26,7 +26,7 @@ ok($obj = Bio::Metagenomics::Genbank->new(
 my @expected_ids = ('1', '2', '3', 'file_id1', 'file_id2');
 is_deeply($obj->ids_list, \@expected_ids, 'IDs got from list and file OK');
 
-throws_ok{$obj->_download_record_url('notafiletype', 'outfile')} 'Bio::Metagenomics::Exceptions::GenbankUnknownFiletype', 'Throw error if unknwon filetype given';
+throws_ok{$obj->_download_record_url('notafiletype', 'outfile')} 'Bio::Metagenomics::Exceptions::GenbankUnknownFiletype', 'Throw error if unknown filetype given';
 
 is($obj->_download_record_url(Bio::Metagenomics::Genbank::FASTA, 'OUT'), 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&rettype=fasta&retmode=text&id=OUT', 'Generate download URL OK for fasta file');
 is($obj->_download_record_url(Bio::Metagenomics::Genbank::GENBANK, 'OUT'), 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&rettype=gb&retmode=text&id=OUT', 'Generate download URL OK for genbank file');
