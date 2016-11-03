@@ -18,6 +18,7 @@ use Bio::Metagenomics::External::Kraken;
 has 'args'               => ( is => 'ro', isa => 'ArrayRef', required => 1 );
 has 'script_name'        => ( is => 'ro', isa => 'Str', required => 1 );
 has 'noclean'            => ( is => 'rw', isa => 'Bool', default => 0 );
+has 'keep_readnames'     => ( is => 'rw', isa => 'Bool', default => 0 );
 has 'database'           => ( is => 'rw', isa => 'Str' );
 has 'kraken_exec'        => ( is => 'rw', isa => 'Str', default => 'kraken' );
 has 'kraken_report_exec' => ( is => 'rw', isa => 'Str', default => 'kraken-report' );
@@ -33,6 +34,7 @@ sub BUILD {
     my ($self) = @_;
     my (
         $help,
+        $keep_readnames,
         $kraken_exec,
         $kraken_report_exec,
         $noclean,
@@ -44,6 +46,7 @@ sub BUILD {
     my $options_ok = GetOptionsFromArray(
         $self->args,
         'h|help' => \$help,
+        'keep_readnames' => \$keep_readnames,
         'n|noclean' => \$noclean,
         'kraken_exec=s' => \$kraken_exec,
         'kraken_report=s' => \$kraken_report_exec,
@@ -63,6 +66,7 @@ sub BUILD {
         $self->reads_2($self->args->[3]);
     }
 
+    $self->keep_readnames($keep_readnames) if defined($keep_readnames);
     $self->kraken_exec($kraken_exec) if defined($kraken_exec);
     $self->kraken_report_exec($kraken_report_exec) if defined($kraken_report_exec);
     $self->noclean($noclean) if defined($noclean);
@@ -84,6 +88,7 @@ sub run {
         reads_2 => $self->reads_2,
         threads => $self->threads,
         tmp_file => $self->tmp_file,
+        fix_fastq_headers => !($self->keep_readnames),
     );
     $kraken->run_kraken($self->outfile);
 }
@@ -101,6 +106,10 @@ Options:
 
 -h,help
     Show this help and exit
+
+-keep_readnames
+    Do not rename the sequences in input fastq file(s)
+    (saves run time, but may break kraken)
 
 -kraken_exec FILENAME
     kraken executable [" . $self->kraken_exec . "]
