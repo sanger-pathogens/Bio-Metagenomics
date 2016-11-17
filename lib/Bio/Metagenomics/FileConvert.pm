@@ -86,7 +86,14 @@ sub _kraken_report_to_metaphlan {
     open FOUT, ">" . $self->outfile or die $!;
     # First two lines should be unclassified and classified as 'root' reads.
     # Sum of these is the total reads
-    my $line = <FIN>;
+    my $line = '#';
+    while ($line =~ /^#/ || $line =~ /^\s*\n?$/) {
+        if (eof(FIN)) {
+            Bio::Metagenomics::Exceptions::FileConvertReadKraken->throw("No data lines found in file");
+        }
+        $line = <FIN>;
+    }
+
     my ($unclassified_count, $rank, $name) = $self->_kraken_report_line_to_data($line);
     ($name eq 'unclassified' and $rank eq 'unclassified') or Bio::Metagenomics::Exceptions::FileConvertReadKraken->throw();
     my $root_count;

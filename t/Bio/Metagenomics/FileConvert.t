@@ -42,5 +42,37 @@ $obj->convert();
 ok(compare('t/data/FileConvert.fa_to_catted_fa.expected.fa', $outfile) == 0, 'Convert fasta to catted fasta');
 unlink $outfile;
 
+ok($obj = Bio::Metagenomics::FileConvert->new(
+    infile    => 't/data/FileConvert.allcomments.kraken',
+    informat  => 'kraken',
+    outfile   => $outfile,
+    outformat => 'metaphlan',
+), 'initialize object to convert kraken to metaphlan');
+
+
+throws_ok{$obj->convert()} 'Bio::Metagenomics::Exceptions::FileConvertReadKraken', 'FileConvert throws error on all comments file';
+unlink $outfile;
+
+ok($obj = Bio::Metagenomics::FileConvert->new(
+    infile    => 't/data/FileConvert.no_data.kraken',
+    informat  => 'kraken',
+    outfile   => $outfile,
+    outformat => 'metaphlan',
+), 'initialize object to convert kraken to metaphlan');
+
+
+throws_ok{$obj->convert()} 'Bio::Metagenomics::Exceptions::FileConvertReadKraken', 'FileConvert throws error on file with no data';
+unlink $outfile;
+
+ok($obj = Bio::Metagenomics::FileConvert->new(
+    infile    => 't/data/FileConvert.space_only.kraken',
+    informat  => 'kraken',
+    outfile   => $outfile,
+    outformat => 'metaphlan',
+), 'initialize object to convert kraken to metaphlan');
+
+
+throws_ok{$obj->convert()} 'Bio::Metagenomics::Exceptions::FileConvertReadKraken', 'FileConvert throws error on space only file';
+unlink $outfile;
 
 done_testing();
