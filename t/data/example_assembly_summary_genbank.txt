@@ -1,0 +1,3 @@
+#   See ftp://ftp.ncbi.nlm.nih.gov/genomes/README_assembly_summary.txt for a description of the columns in this file.
+# assembly_accession	bioproject	biosample	wgs_master	refseq_category	taxid	species_taxid	organism_name	infraspecific_name	isolate	version_status	assembly_level	release_type	genome_rep	seq_rel_date	asm_name	submitter	gbrs_paired_asm	paired_asm_comp	ftp_path	excluded_from_refseq	relation_to_type_material
+GCA_000001215.4	PRJNA13812	SAMN02803731		reference genome	7227	7227	Drosophila melanogaster			latest	Chromosome	Major	Full	2014/08/01	Release 6 plus ISO1 MT	The FlyBase Consortium/Berkeley Drosophila Genome Project/Celera Genomics	GCF_000001215.4	identical	ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/215/GCA_000001215.4_Release_6_plus_ISO1_MT		

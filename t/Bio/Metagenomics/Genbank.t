@@ -21,6 +21,7 @@ ok($obj = Bio::Metagenomics::Genbank->new(
     'ids_list' => \@ids,
     'ids_file' => 't/data/genbank_load_ids_from_file.txt',
     'output_dir' => 'genbank_test',
+    'genbank_summary_file' => 't/data/example_assembly_summary_genbank.txt',
 ), 'initialize object');
 
 my @expected_ids = ('1', '2', '3', 'file_id1', 'file_id2');
@@ -37,6 +38,12 @@ is($obj->_filetype('t/data/genbank_get_output_filetype.unknown'), Bio::Metagenom
 
 is($obj->_fasta_to_number_of_sequences('t/data/genbank_fasta_to_number_of_sequences.42.fa'), 42, '_fasta_to_number_of_sequences() OK non-empty file');
 is($obj->_fasta_to_number_of_sequences('t/data/genbank_fasta_to_number_of_sequences.0.fa'), 0, '_fasta_to_number_of_sequences() OK empty file');
+
+my $expected_genbank_assembly_urls = { 'GCA_000001215.4' => 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/215/GCA_000001215.4_Release_6_plus_ISO1_MT'  };
+ok($obj->_extract_genbank_assembly_urls(), 'Extracting GenBank URLs from assembly summary OK');
+is_deeply($obj->genbank_assembly_urls, $expected_genbank_assembly_urls, 'Extracted GenBank assembly URLs match expected OK');
+
+is($obj->_build_assembly_report_url('GCA_000001215.4'), 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/215/GCA_000001215.4_Release_6_plus_ISO1_MT/GCA_000001215.4_Release_6_plus_ISO1_MT_assembly_report.txt', 'Generate download URL OK for assembly_report');
 
 @expected_ids = qw/CU329670.1 CU329671.1 CU329672.1 X54421.1/;
 my $got_ids = $obj->_assembly_report_to_genbank_ids('t/data/genbank_example_assembly_report.txt');
