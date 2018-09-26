@@ -14,7 +14,6 @@ use Bio::Metagenomics::Exceptions;
 use Bio::Metagenomics::FileConvert;
 use File::Spec;
 use File::Path;
-use Data::Dumper;
 
 use constant {
     FASTA => 0,
