@@ -30,7 +30,9 @@ has 'ids_file'   => ( is => 'ro', isa => 'Maybe[Str]' );
 has 'ids_list'   => ( is => 'rw', isa => 'Maybe[ArrayRef[Str]]');
 has 'max_tries'  => ( is => 'ro', isa => 'Int', default => 5 );
 has 'output_dir' => ( is => 'rw', isa => 'Str', required => 1 );
-
+has 'genbank_summary_url' => ( is => 'ro', isa => 'Str', default => "ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/" );
+has 'genbank_summary_file' => ( is => 'ro', isa => 'Str', default => "assembly_summary_genbank.txt" );
+has 'genbank_assembly_urls' => ( is => 'rw', isa => 'HashRef' );
 
 sub BUILD {
     my ($self) = @_;
@@ -42,7 +44,6 @@ sub BUILD {
     $self->output_dir(File::Spec->rel2abs($self->output_dir));
     $self->downloaded(File::Spec->rel2abs($self->downloaded)) if defined $self->downloaded;
 }
-
 
 sub _load_ids_from_file {
     my ($self) = @_;
@@ -56,14 +57,12 @@ sub _load_ids_from_file {
     close F or die $!;
 }
 
-
 sub _download_record_url {
     my ($self, $filetype, $id) = @_;
     my %h = (FASTA, 'fasta', GENBANK, 'gb');
     defined($h{$filetype}) or Bio::Metagenomics::Exceptions::GenbankUnknownFiletype->throw(error => "Given filetype was $filetype");
     return "http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nucleotide&rettype=" . $h{$filetype} . "&retmode=text&id=$id";
 }
-
 
 sub _filetype {
     my ($self, $filename) = @_;
@@ -211,14 +210,26 @@ sub _download_from_genbank {
     return 1;
 }
 
-
 sub _download_assembly_report {
     my ($self, $id, $filename) = @_;
-    my $cmd = "wget -q -O $filename ftp://ftp.ncbi.nlm.nih.gov/genomes/ASSEMBLY_REPORTS/All/$id.assembly.txt";
+    my $assembly_url = $self->_build_assembly_report_url($id);
+    my $cmd = "wget -q -O $filename $assembly_url";
     print "ID $id\t$cmd\n";
     system($cmd) and Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error getting assembly report file:\n$cmd\n");
 }
 
+sub _build_assembly_report_url {
+    my ($self, $id) = @_;
+    
+    unless ( $self->{genbank_assembly_urls}->{$id} ) {
+        Bio::Metagenomics::Exceptions::GenBankIdNotFound->throw(error => "GenBank assembly ID not found in summary: " . $id . "\n");
+    }
+
+    my $assembly_report_prefix = (split '\/', $self->{genbank_assembly_urls}->{$id})[-1];
+    my $assembly_report_file = $assembly_report_prefix . "_assembly_report.txt";
+    my $assembly_report_url = $self->{genbank_assembly_urls}->{$id} . "/" . $assembly_report_file;
+    return $assembly_report_url;
+}
 
 sub _assembly_report_to_genbank_ids {
     my ($self, $report_file, $id) = @_;
@@ -238,13 +249,57 @@ sub _assembly_report_to_genbank_ids {
     return \@ids;
 }
 
+sub _get_genbank_assembly_urls {
+    my ($self) = @_;
+    $self->_download_genbank_assembly_summary;
+    $self->_extract_genbank_assembly_urls;    
+    unlink($self->genbank_summary_file) if ( -e $self->genbank_summary_file && $self->genbank_summary_file ne '');
+}
+
+sub _download_genbank_assembly_summary {
+    my ($self) = @_;
+    my $genbank_summary_file_url = $self->genbank_summary_url . "/" .  $self->genbank_summary_file;
+    my $cmd = "wget -q $genbank_summary_file_url";
+    print "Downloading GenBank assembly summary file\n";
+    system($cmd) and Bio::Metagenomics::Exceptions::GenbankDownload->throw(error => "Error getting assembly summary file:\n$cmd\n");
+
+    if (!-e $self->genbank_summary_file || -z $self->genbank_summary_file) {
+        Bio::Metagenomics::Exceptions::FileNotFound->throw(error => "GenBank assembly summary file not found: " . $self->genbank_summary_file . "\n");
+    }
+}
+
+sub _extract_genbank_assembly_urls {
+    my ($self) = @_;
+    unless( -e $self->genbank_summary_file && !-z $self->genbank_summary_file ) {
+        Bio::Metagenomics::Exceptions::FileNotFound->throw(error => "GenBank assembly summary file not found: " . $self->genbank_summary_file . "\n");
+    }
+    print "Extracting GenBank assembly URLs from summary\n";    
+
+    my %genbank_assembly_urls;
+    open F, $self->genbank_summary_file or Bio::Metagenomics::Exceptions::FileOpen->throw(error => "Error opening file:" . $self->genbank_summary_file . "\n");
+    while (my $line = <F>) {
+        chomp $line;
+        next if ($line =~ /^\#/);
+        my @fields = split("\t", $line);
+        $genbank_assembly_urls{ $fields[0] } = $fields[19];
+    }
+    close F or die $!;    
+    
+    $self->genbank_assembly_urls(\%genbank_assembly_urls);
+    unless ( %{ $self->{genbank_assembly_urls} } ) {
+        Bio::Metagenomics::Exceptions::GenbankPathExtraction->throw(error => "No assembly URLs extracted from: " . $self->genbank_summary_file . "\n");
+    }
+}
 
 sub download {
     my ($self) = @_;
     my @filenames;
+
+    $self->_get_genbank_assembly_urls;
+
     mkdir($self->output_dir);
     -e $self->output_dir or die $!;
-
+    
     for my $id (@{$self->ids_list}) {
         my $filename = File::Spec->catfile($self->output_dir, "$id.fasta");
         my $filename_gz = "$filename.gz";
