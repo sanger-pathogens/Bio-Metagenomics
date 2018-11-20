@@ -12,7 +12,7 @@ Runs metagenomics pipeline
     * [Running the tests](#running-the-tests)
   * [Usage](#usage)
     * [metagm\_build\_kraken\_db](#metagm_build_kraken_db)
-    * [metagm\_convert\_fasta\_to\_kraken\_format \-\-help](#metagm_convert_fasta_to_kraken_format---help)
+    * [metagm\_convert\_fasta\_to\_kraken\_format](#metagm_convert_fasta_to_kraken_format)
     * [metagm\_genbank\_downloader](#metagm_genbank_downloader)
     * [metagm\_make\_metaphlan\_heatmap](#metagm_make_metaphlan_heatmap)
     * [metagm\_run\_kraken](#metagm_run_kraken)
