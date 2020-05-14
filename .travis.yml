@@ -1,13 +1,53 @@
+dist: bionic
 language: perl
+os: linux
+if: tag IS blank AND env(GITHUB_OAUTH_TOKEN) IS present AND type IN (push, pull_request)
+branches:
+  only:
+  - master
+cache:
+  directories:
+  - perl_modules
+addons:
+  apt:
+    packages:
+    - git
+    - wget
+    - file
+    - build-essential
+    - libssl-dev
+    - libexpat1-dev
+    - cpanminus
+    - libdb-dev
+before_install:
+- cpanm local::lib
+- eval "$(perl -Mlocal::lib=${PWD}/perl_modules)"
+- cpanm --notest Dist::Zilla
+- mkdir fake_bin
+- touch fakebin/kraken fakebin/kraken-build fakebin/kraken-report fakebin/merge_metaphlan_tables.py fakebin/metaphlan_hclust_heatmap.py"
+- chmod -R 755 fake_bin
+-  PATH=$(pwd)/fake_bin:$PATH"
 perl:
-  - "5.14"
-sudo: false
+- "5.30"
 install:
-  - "mkdir -p build && cd build"
-  - "mkdir fake_bin && cd fake_bin"
-  - "touch kraken kraken-build kraken-report merge_metaphlan_tables.py  metaphlan_hclust_heatmap.py"
-  - "chmod u+x $(ls) && export PATH=$(pwd):$PATH"
-  - "cd ../.. && cpanm Dist::Zilla"
-  - "dzil authordeps --missing | cpanm"
-  - "dzil listdeps --missing | cpanm"
-script: "dzil test"
+- git config --local user.name "Pathogen Informatics CI"
+- git config --local user.email "pathdev@sanger.ac.uk"
+- export UUID=$(cat /proc/sys/kernel/random/uuid)
+- git checkout -b $UUID
+- export TIMESTAMP_VERSION=$(date -u '+%Y.%m.%d.%H.%M.%S.%3N')
+- export TRAVIS_TAG=$(if [ "$TRAVIS_BRANCH" == "master" ]; then echo "v${TIMESTAMP_VERSION}"; else echo "$TRAVIS_BRANCH-${TIMESTAMP_VERSION}"; fi)
+- sed -i 's:^version = .*$:version = '"$TIMESTAMP_VERSION"':g' dist.ini
+- git commit -am "Updated the version number to $TIMESTAMP_VERSION"
+- git tag $TRAVIS_TAG
+- if [ "$TRAVIS_PULL_REQUEST" == "false" ]; then git push -q "https://${GITHUB_OAUTH_TOKEN}@github.com/${TRAVIS_REPO_SLUG}" $TRAVIS_TAG; fi
+- dzil authordeps --missing | cpanm --notest
+- dzil listdeps --missing | cpanm --notest
+script:
+- dzil test
+- dzil build
+deploy:
+  provider: releases
+  token: "$GITHUB_OAUTH_TOKEN"
+  file_glob: true
+  file: "*.tar.gz"
+  skip_cleanup: true
