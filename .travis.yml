@@ -24,9 +24,9 @@ before_install:
 - eval "$(perl -Mlocal::lib=${PWD}/perl_modules)"
 - cpanm --notest Dist::Zilla
 - mkdir fake_bin
-- touch fakebin/kraken fakebin/kraken-build fakebin/kraken-report fakebin/merge_metaphlan_tables.py fakebin/metaphlan_hclust_heatmap.py
+- for x in kraken kraken-build kraken-report merge_metaphlan_tables.py metaphlan_hclust_heatmap.py; do touch fake_bin/$x; done
 - chmod -R 755 fake_bin
--  PATH=$(pwd)/fake_bin:$PATH"
+- PATH=$(pwd)/fake_bin:$PATH"
 perl:
 - "5.30"
 install:
