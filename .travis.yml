@@ -26,7 +26,7 @@ before_install:
 - mkdir fake_bin
 - for x in kraken kraken-build kraken-report merge_metaphlan_tables.py metaphlan_hclust_heatmap.py; do touch fake_bin/$x; done
 - chmod -R 755 fake_bin
-- PATH=$(pwd)/fake_bin:$PATH"
+- PATH=$(pwd)/fake_bin:$PATH
 perl:
 - "5.30"
 install:
